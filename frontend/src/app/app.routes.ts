@@ -4,6 +4,7 @@ import { MainLayoutComponent } from './core/layout/main-layout/main-layout.compo
 import { LoginComponent } from './features/auth/login.component';
 import { RegisterComponent } from './features/auth/register.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { LandingComponent } from './features/landing/landing.component';
 
 export const routes: Routes = [
 	{
@@ -12,8 +13,7 @@ export const routes: Routes = [
 		children: [
 			{
 				path: '',
-				pathMatch: 'full',
-				redirectTo: 'dashboard'
+				component: LandingComponent
 			},
 			{
 				path: 'login',
@@ -30,7 +30,7 @@ export const routes: Routes = [
 			},
 			{
 				path: '**',
-				redirectTo: 'dashboard'
+				redirectTo: ''
 			}
 		]
 	},

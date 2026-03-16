@@ -3,6 +3,7 @@ using LealFinance.Api.Configuration;
 using LealFinance.Api.Data;
 using LealFinance.Api.Endpoints;
 using LealFinance.Api.Security;
+using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -63,6 +64,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<LealFinanceDbContext>();
     dbContext.Database.EnsureCreated();
+    EnsureAuthRefreshTokenColumns(databasePath);
 }
 
 if (app.Environment.IsDevelopment())
@@ -78,3 +80,35 @@ app.UseAuthorization();
 app.MapLealFinanceEndpoints();
 
 app.Run();
+
+static void EnsureAuthRefreshTokenColumns(string sqliteDatabasePath)
+{
+    using var connection = new SqliteConnection($"Data Source={sqliteDatabasePath}");
+    connection.Open();
+
+    using var tableInfoCommand = connection.CreateCommand();
+    tableInfoCommand.CommandText = "PRAGMA table_info(Users);";
+
+    var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    using (var reader = tableInfoCommand.ExecuteReader())
+    {
+        while (reader.Read())
+        {
+            existingColumns.Add(reader.GetString(1));
+        }
+    }
+
+    if (!existingColumns.Contains("RefreshToken"))
+    {
+        using var alterRefreshTokenCommand = connection.CreateCommand();
+        alterRefreshTokenCommand.CommandText = "ALTER TABLE Users ADD COLUMN RefreshToken TEXT NULL;";
+        alterRefreshTokenCommand.ExecuteNonQuery();
+    }
+
+    if (!existingColumns.Contains("RefreshTokenExpiryTime"))
+    {
+        using var alterRefreshTokenExpiryCommand = connection.CreateCommand();
+        alterRefreshTokenExpiryCommand.CommandText = "ALTER TABLE Users ADD COLUMN RefreshTokenExpiryTime TEXT NULL;";
+        alterRefreshTokenExpiryCommand.ExecuteNonQuery();
+    }
+}

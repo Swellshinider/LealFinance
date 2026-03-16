@@ -1,14 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, TimeoutError } from 'rxjs';
 
 import { AuthService, LoginRequest } from '../../core/services/auth.service';
 
@@ -23,6 +24,7 @@ import { AuthService, LoginRequest } from '../../core/services/auth.service';
     ReactiveFormsModule,
     RouterLink,
     MatCardModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -33,6 +35,8 @@ import { AuthService, LoginRequest } from '../../core/services/auth.service';
 })
 export class LoginComponent {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly ngZone = inject(NgZone);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   /** Error message shown after failed login attempts. */
   public errorMessage = '';
@@ -46,7 +50,8 @@ export class LoginComponent {
   /** Reactive login form. */
   public readonly loginForm = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]]
+    password: ['', [Validators.required, Validators.minLength(8)]],
+    rememberMe: [false]
   });
 
   public constructor(
@@ -58,6 +63,10 @@ export class LoginComponent {
    * Submits login credentials.
    */
   public onSubmit(): void {
+    if (this.isSubmitting) {
+      return;
+    }
+
     this.errorMessage = '';
 
     if (this.loginForm.invalid) {
@@ -69,29 +78,57 @@ export class LoginComponent {
 
     const payload: LoginRequest = {
       email: this.loginForm.controls.email.value,
-      password: this.loginForm.controls.password.value
+      password: this.loginForm.controls.password.value,
+      rememberMe: this.loginForm.controls.rememberMe.value
     };
 
     this.authService
       .login(payload)
-      .pipe(finalize(() => (this.isSubmitting = false)))
+      .pipe(
+        finalize(() => {
+          this.runInAngular(() => {
+            this.isSubmitting = false;
+          });
+        })
+      )
       .subscribe({
         next: () => {
-          void this.router.navigate(['/dashboard']);
+          this.runInAngular(() => {
+            void this.router.navigate(['/dashboard']);
+          });
         },
-        error: (error: HttpErrorResponse) => {
-          if (error.status === 401) {
-            this.errorMessage = 'No account found with these credentials. Please register or try again.';
-            return;
-          }
+        error: (error: unknown) => {
+          this.runInAngular(() => {
+            if (error instanceof TimeoutError) {
+              this.errorMessage = 'The login request timed out. Please try again.';
+              return;
+            }
 
-          if (error.status === 0) {
-            this.errorMessage = 'Cannot reach the server right now. Please try again in a moment.';
-            return;
-          }
+            if (!(error instanceof HttpErrorResponse)) {
+              this.errorMessage = 'Login failed. Please try again.';
+              return;
+            }
 
-          this.errorMessage = 'Login failed. Please try again.';
+            if (error.status === 401) {
+              this.errorMessage = 'No account found with these credentials. Please register or try again.';
+              return;
+            }
+
+            if (error.status === 0) {
+              this.errorMessage = 'Cannot reach the server right now. Please try again in a moment.';
+              return;
+            }
+
+            this.errorMessage = 'Login failed. Please try again.';
+          });
         }
       });
+  }
+
+  private runInAngular(action: () => void): void {
+    this.ngZone.run(() => {
+      action();
+      this.changeDetectorRef.detectChanges();
+    });
   }
 }

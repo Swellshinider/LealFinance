@@ -23,6 +23,8 @@ public sealed class LealFinanceDbContext(DbContextOptions<LealFinanceDbContext> 
             entity.Property(user => user.Email).IsRequired().HasMaxLength(256);
             entity.Property(user => user.PasswordHash).IsRequired();
             entity.Property(user => user.CreatedAtUtc).IsRequired();
+            entity.Property(user => user.RefreshToken).HasMaxLength(512);
+            entity.Property(user => user.RefreshTokenExpiryTime);
         });
 
         base.OnModelCreating(modelBuilder);

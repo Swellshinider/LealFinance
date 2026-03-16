@@ -1,5 +1,6 @@
 using LealFinance.Api.Entities;
 using LealFinance.Api.Models.Auth;
+using System.Security.Claims;
 
 namespace LealFinance.Api.Security;
 
@@ -14,4 +15,11 @@ public interface IJwtTokenService
     /// <param name="user">Authenticated user.</param>
     /// <returns>Signed token payload.</returns>
     AuthResponse CreateToken(User user);
+
+    /// <summary>
+    /// Gets a principal from an expired JWT while still validating signature and issuer settings.
+    /// </summary>
+    /// <param name="token">Expired JWT value.</param>
+    /// <returns>Validated claims principal.</returns>
+    ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
 }

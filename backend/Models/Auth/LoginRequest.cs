@@ -22,4 +22,9 @@ public sealed class LoginRequest
     [MinLength(8)]
     [MaxLength(128)]
     public string Password { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether refresh token persistence is requested.
+    /// </summary>
+    public bool RememberMe { get; set; }
 }

@@ -1,8 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit, inject } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
+import { finalize, timeout } from 'rxjs';
 
 interface DashboardSummaryResponse {
   message: string;
@@ -20,6 +21,10 @@ interface DashboardSummaryResponse {
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
+  private readonly ngZone = inject(NgZone);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly requestTimeoutMs = 15000;
+
   /** Protected backend status message. */
   public message = 'Loading dashboard data...';
 
@@ -40,27 +45,44 @@ export class DashboardComponent implements OnInit {
   public ngOnInit(): void {
     this.httpClient
       .get<DashboardSummaryResponse>('http://localhost:5216/api/dashboard/summary')
+      .pipe(
+        timeout(this.requestTimeoutMs),
+        finalize(() => {
+          this.runInAngular(() => {
+            this.isLoading = false;
+          });
+        })
+      )
       .subscribe({
         next: (response: DashboardSummaryResponse) => {
-          this.isLoading = false;
-          this.message = response.message;
-          this.generatedAtUtc = response.generatedAtUtc;
+          this.runInAngular(() => {
+            this.message = response.message;
+            this.generatedAtUtc = response.generatedAtUtc;
+          });
         },
-        error: (error: HttpErrorResponse) => {
-          this.isLoading = false;
-          if (error.status === 401) {
-            this.message = 'Your session has expired. Please log in again.';
-            void this.router.navigate(['/login']);
-            return;
-          }
+        error: (error: unknown) => {
+          this.runInAngular(() => {
+            if (error instanceof HttpErrorResponse && error.status === 401) {
+              this.message = 'Your session has expired. Please log in again.';
+              void this.router.navigate(['/login']);
+              return;
+            }
 
-          if (error.status === 0) {
-            this.message = 'Cannot reach the server right now.';
-            return;
-          }
+            if (error instanceof HttpErrorResponse && error.status === 0) {
+              this.message = 'Cannot reach the server right now.';
+              return;
+            }
 
-          this.message = 'Unable to load dashboard data.';
+            this.message = 'Unable to load dashboard data.';
+          });
         }
       });
+  }
+
+  private runInAngular(action: () => void): void {
+    this.ngZone.run(() => {
+      action();
+      this.changeDetectorRef.detectChanges();
+    });
   }
 }

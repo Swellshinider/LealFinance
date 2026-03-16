@@ -15,6 +15,7 @@ namespace LealFinance.Api.Security;
 public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {
     private readonly JwtOptions _options = options.Value;
+    private readonly JwtSecurityTokenHandler _tokenHandler = new();
 
     /// <inheritdoc />
     public AuthResponse CreateToken(User user)
@@ -37,7 +38,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             expires: expiresAtUtc,
             signingCredentials: credentials);
 
-        var tokenValue = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+        var tokenValue = _tokenHandler.WriteToken(tokenDescriptor);
 
         return new AuthResponse
         {
@@ -45,5 +46,30 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             Email = user.Email,
             ExpiresAtUtc = expiresAtUtc
         };
+    }
+
+    /// <inheritdoc />
+    public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+    {
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = false,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = _options.Issuer,
+            ValidAudience = _options.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey)),
+            ClockSkew = TimeSpan.Zero
+        };
+
+        var principal = _tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+        if (validatedToken is not JwtSecurityToken jwtSecurityToken ||
+            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new SecurityTokenException("Invalid token.");
+        }
+
+        return principal;
     }
 }

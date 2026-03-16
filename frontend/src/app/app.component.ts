@@ -1,38 +1,37 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
-interface PingResponse {
-  message: string;
-}
+import { AuthService } from './core/services/auth.service';
 
 /**
- * Root component used to validate backend/frontend connectivity.
+ * Root application shell with navigation and routed content.
  */
 @Component({
   selector: 'app-root',
   standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink],
   templateUrl: './app.component.html',
   styleUrl: './app.scss'
 })
-export class AppComponent implements OnInit {
-  /**
-   * UI message returned by the backend ping endpoint.
-   */
-  public message = 'Loading...';
-
-  public constructor(private readonly httpClient: HttpClient) {}
+export class AppComponent {
+  public constructor(
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
 
   /**
-   * Loads the ping response from the backend API.
+   * Returns whether a user is authenticated.
    */
-  public ngOnInit(): void {
-    this.httpClient.get<PingResponse>('http://localhost:5216/api/ping').subscribe({
-      next: (response: PingResponse) => {
-        this.message = response.message;
-      },
-      error: () => {
-        this.message = 'Could not reach LealFinance API.';
-      }
-    });
+  public isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
+  /**
+   * Clears local session and redirects to login.
+   */
+  public logout(): void {
+    this.authService.logout();
+    void this.router.navigate(['/login']);
   }
 }

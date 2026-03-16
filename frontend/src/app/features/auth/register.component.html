@@ -1,0 +1,37 @@
+<section class="auth-card">
+  <h2>Register</h2>
+
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <label for="email">Email</label>
+    <input id="email" type="email" formControlName="email" />
+    @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
+      <small>Please enter a valid email.</small>
+    }
+
+    <label for="password">Password</label>
+    <input id="password" type="password" formControlName="password" />
+    @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
+      <small>Password must be at least 8 characters.</small>
+    }
+
+    <label for="confirmPassword">Confirm Password</label>
+    <input id="confirmPassword" type="password" formControlName="confirmPassword" />
+    @if (registerForm.touched && registerForm.errors?.['passwordMismatch']) {
+      <small>Passwords must match.</small>
+    }
+
+    @if (errorMessage) {
+      <p class="error">{{ errorMessage }}</p>
+    }
+
+    @if (successMessage) {
+      <p class="success">{{ successMessage }}</p>
+    }
+
+    <button type="submit" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Creating account...' : 'Register' }}
+    </button>
+  </form>
+
+  <p>Already registered? <a routerLink="/login">Sign in</a>.</p>
+</section>

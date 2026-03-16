@@ -1,0 +1,105 @@
+import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { Component, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+
+import { AuthService, RegisterRequest } from '../../core/services/auth.service';
+
+/**
+ * Creates a validator that checks password confirmation fields.
+ */
+function passwordMatchValidator(): ValidatorFn {
+  return (formGroup: AbstractControl): ValidationErrors | null => {
+    const password = formGroup.get('password')?.value as string;
+    const confirmPassword = formGroup.get('confirmPassword')?.value as string;
+
+    return password && confirmPassword && password !== confirmPassword
+      ? { passwordMismatch: true }
+      : null;
+  };
+}
+
+/**
+ * Registration view for new users.
+ */
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.scss'
+})
+export class RegisterComponent {
+  private readonly formBuilder = inject(FormBuilder);
+
+  /** Error message shown after failed registration attempts. */
+  public errorMessage = '';
+
+  /** Success message shown after successful registration. */
+  public successMessage = '';
+
+  /** Indicates submission in progress. */
+  public isSubmitting = false;
+
+  /** Reactive registration form. */
+  public readonly registerForm = this.formBuilder.nonNullable.group(
+    {
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required]]
+    },
+    { validators: passwordMatchValidator() }
+  );
+
+  public constructor(
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
+
+  /**
+   * Submits registration data.
+   */
+  public onSubmit(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    const payload: RegisterRequest = {
+      email: this.registerForm.controls.email.value,
+      password: this.registerForm.controls.password.value
+    };
+
+    this.authService
+      .register(payload)
+      .pipe(finalize(() => (this.isSubmitting = false)))
+      .subscribe({
+        next: () => {
+          this.successMessage = 'Registration successful. You can now log in.';
+          this.registerForm.reset();
+          void this.router.navigate(['/login']);
+        },
+        error: (error: HttpErrorResponse) => {
+          if (error.status === 409) {
+            this.errorMessage = 'A user with this email already exists.';
+            return;
+          }
+
+          if (error.status === 0) {
+            this.errorMessage = 'Cannot reach the server right now. Please try again in a moment.';
+            return;
+          }
+
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
+      });
+  }
+}

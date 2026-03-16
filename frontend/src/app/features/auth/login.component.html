@@ -1,0 +1,27 @@
+<section class="auth-card">
+  <h2>Login</h2>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <label for="email">Email</label>
+    <input id="email" type="email" formControlName="email" />
+    @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
+      <small>Please enter a valid email.</small>
+    }
+
+    <label for="password">Password</label>
+    <input id="password" type="password" formControlName="password" />
+    @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+      <small>Password must be at least 8 characters.</small>
+    }
+
+    @if (errorMessage) {
+      <p class="error">{{ errorMessage }}</p>
+    }
+
+    <button type="submit" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Signing in...' : 'Login' }}
+    </button>
+  </form>
+
+  <p>No account? <a routerLink="/register">Register here</a>.</p>
+</section>

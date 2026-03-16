@@ -1,0 +1,48 @@
+<section class="reports-tab">
+  @if (isLoading) {
+    <div class="loading-state">
+      <mat-spinner [diameter]="32"></mat-spinner>
+      <p>Loading reports...</p>
+    </div>
+  } @else if (message) {
+    <p class="error-message">{{ message }}</p>
+  } @else {
+    <div class="charts-grid">
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Expenses by category</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (pieChartData.labels?.length) {
+            <canvas
+              baseChart
+              [type]="'pie'"
+              [data]="pieChartData"
+              [options]="pieChartOptions">
+            </canvas>
+          } @else {
+            <p class="muted">No expense data available yet.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Monthly income vs expenses</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (barChartData.labels?.length) {
+            <canvas
+              baseChart
+              [type]="'bar'"
+              [data]="barChartData"
+              [options]="barChartOptions">
+            </canvas>
+          } @else {
+            <p class="muted">No monthly data available yet.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</section>

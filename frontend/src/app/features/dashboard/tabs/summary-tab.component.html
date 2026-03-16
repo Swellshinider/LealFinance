@@ -1,0 +1,37 @@
+<section class="summary-tab">
+  @if (isLoading) {
+    <div class="loading-state">
+      <mat-spinner [diameter]="32"></mat-spinner>
+      <p>Loading summary...</p>
+    </div>
+  } @else if (message) {
+    <p class="error-message">{{ message }}</p>
+  } @else {
+    <mat-card appearance="outlined" class="balance-card">
+      <mat-card-content>
+        <p class="balance-label">Current balance</p>
+        <p class="balance-value">{{ totalCurrentBalance | currency }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <h3>Most recent transactions</h3>
+
+    @if (recentTransactions.length === 0) {
+      <p class="muted">No transactions recorded yet.</p>
+    } @else {
+      <ul class="recent-transactions">
+        @for (transaction of recentTransactions; track transaction.id) {
+          <li>
+            <div>
+              <p class="category">{{ transaction.category }}</p>
+              <p class="meta">{{ transaction.date | date: 'mediumDate' }} · {{ transaction.type }}</p>
+            </div>
+            <strong [class.income]="transaction.type === 'Income'" [class.expense]="transaction.type === 'Expense'">
+              {{ transaction.type === 'Expense' ? '-' : '+' }}{{ transaction.amount | currency }}
+            </strong>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

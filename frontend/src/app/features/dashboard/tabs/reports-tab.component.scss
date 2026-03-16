@@ -1,0 +1,27 @@
+.reports-tab {
+  padding-top: 1rem;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.error-message {
+  color: #b91c1c;
+}
+
+.charts-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+canvas {
+  max-width: 100%;
+}
+
+.muted {
+  color: rgba(15, 23, 42, 0.72);
+}

@@ -65,6 +65,7 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<LealFinanceDbContext>();
     dbContext.Database.EnsureCreated();
     EnsureAuthRefreshTokenColumns(databasePath);
+    EnsureTransactionsTable(databasePath);
 }
 
 if (app.Environment.IsDevelopment())
@@ -111,4 +112,31 @@ static void EnsureAuthRefreshTokenColumns(string sqliteDatabasePath)
         alterRefreshTokenExpiryCommand.CommandText = "ALTER TABLE Users ADD COLUMN RefreshTokenExpiryTime TEXT NULL;";
         alterRefreshTokenExpiryCommand.ExecuteNonQuery();
     }
+}
+
+static void EnsureTransactionsTable(string sqliteDatabasePath)
+{
+    using var connection = new SqliteConnection($"Data Source={sqliteDatabasePath}");
+    connection.Open();
+
+    using var command = connection.CreateCommand();
+    command.CommandText = """
+        CREATE TABLE IF NOT EXISTS Transactions (
+            Id INTEGER NOT NULL CONSTRAINT PK_Transactions PRIMARY KEY AUTOINCREMENT,
+            UserId INTEGER NOT NULL,
+            Type TEXT NOT NULL,
+            Amount NUMERIC NOT NULL,
+            IncomeOrExpenseCategory TEXT NOT NULL,
+            Category TEXT NOT NULL,
+            Date TEXT NOT NULL,
+            Notes TEXT NULL,
+            CreatedAtUtc TEXT NOT NULL,
+            FOREIGN KEY (UserId) REFERENCES Users (Id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS IX_Transactions_UserId_Date
+            ON Transactions(UserId, Date DESC);
+        """;
+
+    command.ExecuteNonQuery();
 }

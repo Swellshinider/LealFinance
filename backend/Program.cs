@@ -3,6 +3,7 @@ using LealFinance.Api.Configuration;
 using LealFinance.Api.Data;
 using LealFinance.Api.Endpoints;
 using LealFinance.Api.Security;
+using LealFinance.Api.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +39,8 @@ builder.Services.AddDbContext<LealFinanceDbContext>(options =>
 
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IRecurringTransactionService, RecurringTransactionService>();
+builder.Services.AddHostedService<RecurringTransactionSchedulerService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -66,6 +69,8 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.EnsureCreated();
     EnsureAuthRefreshTokenColumns(databasePath);
     EnsureTransactionsTable(databasePath);
+    EnsureRecurringTransactionsTable(databasePath);
+    EnsureRecurringColumnsOnTransactions(databasePath);
 }
 
 if (app.Environment.IsDevelopment())
@@ -139,4 +144,84 @@ static void EnsureTransactionsTable(string sqliteDatabasePath)
         """;
 
     command.ExecuteNonQuery();
+}
+
+static void EnsureRecurringTransactionsTable(string sqliteDatabasePath)
+{
+    using var connection = new SqliteConnection($"Data Source={sqliteDatabasePath}");
+    connection.Open();
+
+    using var command = connection.CreateCommand();
+    command.CommandText = """
+        CREATE TABLE IF NOT EXISTS RecurringTransactions (
+            Id INTEGER NOT NULL CONSTRAINT PK_RecurringTransactions PRIMARY KEY AUTOINCREMENT,
+            UserId INTEGER NOT NULL,
+            Name TEXT NOT NULL,
+            Type TEXT NOT NULL,
+            Amount NUMERIC NOT NULL,
+            Category TEXT NOT NULL,
+            Notes TEXT NULL,
+            StartDateUtc TEXT NOT NULL,
+            FrequencyUnit TEXT NOT NULL,
+            FrequencyInterval INTEGER NOT NULL,
+            IsInfinite INTEGER NOT NULL,
+            MaxOccurrences INTEGER NULL,
+            StartPaymentNumber INTEGER NOT NULL,
+            GeneratedOccurrences INTEGER NOT NULL,
+            NextOccurrenceDateUtc TEXT NULL,
+            IsActive INTEGER NOT NULL,
+            CreatedAtUtc TEXT NOT NULL,
+            UpdatedAtUtc TEXT NOT NULL,
+            FOREIGN KEY (UserId) REFERENCES Users (Id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS IX_RecurringTransactions_UserId_IsActive_NextOccurrenceDateUtc
+            ON RecurringTransactions(UserId, IsActive, NextOccurrenceDateUtc);
+        """;
+
+    command.ExecuteNonQuery();
+}
+
+static void EnsureRecurringColumnsOnTransactions(string sqliteDatabasePath)
+{
+    using var connection = new SqliteConnection($"Data Source={sqliteDatabasePath}");
+    connection.Open();
+
+    using var tableInfoCommand = connection.CreateCommand();
+    tableInfoCommand.CommandText = "PRAGMA table_info(Transactions);";
+
+    var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    using (var reader = tableInfoCommand.ExecuteReader())
+    {
+        while (reader.Read())
+        {
+            existingColumns.Add(reader.GetString(1));
+        }
+    }
+
+    if (!existingColumns.Contains("RecurringTransactionId"))
+    {
+        using var alterRecurringTransactionId = connection.CreateCommand();
+        alterRecurringTransactionId.CommandText = "ALTER TABLE Transactions ADD COLUMN RecurringTransactionId INTEGER NULL;";
+        alterRecurringTransactionId.ExecuteNonQuery();
+    }
+
+    if (!existingColumns.Contains("RecurringSequenceNumber"))
+    {
+        using var alterRecurringSequenceNumber = connection.CreateCommand();
+        alterRecurringSequenceNumber.CommandText = "ALTER TABLE Transactions ADD COLUMN RecurringSequenceNumber INTEGER NULL;";
+        alterRecurringSequenceNumber.ExecuteNonQuery();
+    }
+
+    using var recurringIndexCommand = connection.CreateCommand();
+    recurringIndexCommand.CommandText = """
+        CREATE INDEX IF NOT EXISTS IX_Transactions_RecurringTransactionId
+            ON Transactions(RecurringTransactionId);
+
+        CREATE UNIQUE INDEX IF NOT EXISTS IX_Transactions_RecurringTransactionId_RecurringSequenceNumber
+            ON Transactions(RecurringTransactionId, RecurringSequenceNumber)
+            WHERE RecurringTransactionId IS NOT NULL AND RecurringSequenceNumber IS NOT NULL;
+        """;
+
+    recurringIndexCommand.ExecuteNonQuery();
 }

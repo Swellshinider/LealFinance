@@ -18,6 +18,16 @@ public sealed class Transaction
     public int UserId { get; set; }
 
     /// <summary>
+    /// Gets or sets the originating recurring transaction identifier when system-generated.
+    /// </summary>
+    public int? RecurringTransactionId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the recurring payment sequence number when system-generated.
+    /// </summary>
+    public int? RecurringSequenceNumber { get; set; }
+
+    /// <summary>
     /// Gets or sets the transaction type (<c>Income</c> or <c>Expense</c>).
     /// </summary>
     [Required]

@@ -89,6 +89,77 @@ export type ReportFixedDateRange = 'day' | 'week' | 'month' | 'sixMonths' | 'yea
 export type ReportTransactionTypeFilter = 'all' | 'Income' | 'Expense';
 
 /**
+ * Supported recurring schedule units.
+ */
+export type RecurringFrequencyUnit = 'Day' | 'Week' | 'Month' | 'Year';
+
+/**
+ * Recurring transaction schedule item.
+ */
+export interface RecurringTransaction {
+  /** Schedule identifier. */
+  id: number;
+  /** Payment label template. */
+  name: string;
+  /** Income or expense type. */
+  type: 'Income' | 'Expense';
+  /** Monetary value. */
+  amount: number;
+  /** Transaction category. */
+  category: string;
+  /** Optional note template. */
+  notes: string | null;
+  /** Schedule start date (ISO). */
+  startDate: string;
+  /** Frequency unit. */
+  frequencyUnit: RecurringFrequencyUnit;
+  /** Frequency interval multiplier. */
+  frequencyInterval: number;
+  /** True for unlimited schedules. */
+  isInfinite: boolean;
+  /** Last payment sequence number for limited schedules. */
+  maxOccurrences: number | null;
+  /** First payment number to generate. */
+  startPaymentNumber: number;
+  /** Number of generated transactions. */
+  generatedOccurrences: number;
+  /** Next generation date (ISO). */
+  nextOccurrenceDate: string | null;
+  /** Active status. */
+  isActive: boolean;
+  /** Remaining payment count for limited schedules. */
+  remainingPayments: number | null;
+}
+
+/**
+ * Upsert payload for recurring transaction schedules.
+ */
+export interface RecurringTransactionUpsertRequest {
+  /** Payment label template. */
+  name: string;
+  /** Income or expense type. */
+  type: 'Income' | 'Expense';
+  /** Monetary value. */
+  amount: number;
+  /** Transaction category. */
+  category: string;
+  /** Optional note template. */
+  notes: string | null;
+  /** Schedule start date as ISO string. */
+  startDate: string;
+  /** Frequency unit. */
+  frequencyUnit: RecurringFrequencyUnit;
+  /** Frequency interval multiplier. */
+  frequencyInterval: number;
+  /** True for unlimited schedules. */
+  isInfinite: boolean;
+  /** Last payment sequence number for limited schedules. */
+  maxOccurrences: number | null;
+  /** First payment number to generate. */
+  startPaymentNumber: number;
+}
+
+/**
  * Protected dashboard API client.
  */
 @Injectable({ providedIn: 'root' })
@@ -96,11 +167,17 @@ export class DashboardService {
   private readonly apiBaseUrl = 'http://localhost:5216/api/dashboard';
   private readonly requestTimeoutMs = 15000;
   private readonly transactionsChangedSubject = new Subject<void>();
+  private readonly recurringChangedSubject = new Subject<void>();
 
   /**
    * Emits when any transaction create, update, or delete operation succeeds.
    */
   public readonly transactionsChanged$ = this.transactionsChangedSubject.asObservable();
+
+  /**
+   * Emits when recurring schedules change.
+   */
+  public readonly recurringChanged$ = this.recurringChangedSubject.asObservable();
 
   public constructor(private readonly httpClient: HttpClient) {}
 
@@ -159,9 +236,52 @@ export class DashboardService {
   }
 
   /**
+   * Gets recurring schedules for the authenticated user.
+   */
+  public getRecurringTransactions(): Observable<RecurringTransaction[]> {
+    return this.httpClient
+      .get<RecurringTransaction[]>(`${this.apiBaseUrl}/recurring`)
+      .pipe(timeout(this.requestTimeoutMs));
+  }
+
+  /**
+   * Creates a new recurring schedule.
+   */
+  public createRecurringTransaction(request: RecurringTransactionUpsertRequest): Observable<RecurringTransaction> {
+    return this.httpClient
+      .post<RecurringTransaction>(`${this.apiBaseUrl}/recurring`, request)
+      .pipe(timeout(this.requestTimeoutMs));
+  }
+
+  /**
+   * Updates an existing recurring schedule.
+   */
+  public updateRecurringTransaction(recurringId: number, request: RecurringTransactionUpsertRequest): Observable<RecurringTransaction> {
+    return this.httpClient
+      .put<RecurringTransaction>(`${this.apiBaseUrl}/recurring/${recurringId}`, request)
+      .pipe(timeout(this.requestTimeoutMs));
+  }
+
+  /**
+   * Cancels a recurring schedule.
+   */
+  public cancelRecurringTransaction(recurringId: number): Observable<{ message: string }> {
+    return this.httpClient
+      .delete<{ message: string }>(`${this.apiBaseUrl}/recurring/${recurringId}`)
+      .pipe(timeout(this.requestTimeoutMs));
+  }
+
+  /**
    * Broadcasts a transaction data change event to all dashboard tabs.
    */
   public notifyTransactionsChanged(): void {
     this.transactionsChangedSubject.next();
+  }
+
+  /**
+   * Broadcasts a recurring schedule change event.
+   */
+  public notifyRecurringChanged(): void {
+    this.recurringChangedSubject.next();
   }
 }

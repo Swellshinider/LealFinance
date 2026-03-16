@@ -2,7 +2,7 @@
   <mat-card class="dashboard-card" appearance="outlined">
     <mat-card-header>
       <mat-card-title>Dashboard</mat-card-title>
-      <mat-card-subtitle>Manage your finances across summary, transactions, and reports</mat-card-subtitle>
+      <mat-card-subtitle>Manage your finances across summary, transactions, recurring schedules, and reports</mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
@@ -12,6 +12,9 @@
         </mat-tab>
         <mat-tab label="Transactions">
           <app-transactions-tab></app-transactions-tab>
+        </mat-tab>
+        <mat-tab label="Recurring">
+          <app-recurring-tab></app-recurring-tab>
         </mat-tab>
         <mat-tab label="Reports">
           <app-reports-tab></app-reports-tab>

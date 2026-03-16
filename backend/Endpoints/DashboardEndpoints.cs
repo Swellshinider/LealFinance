@@ -208,6 +208,153 @@ public static class DashboardEndpoints
             });
         });
 
+        dashboardRoutes.MapGet("/recurring", async (HttpContext httpContext, LealFinanceDbContext dbContext, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var recurringItems = await dbContext.RecurringTransactions
+                .AsNoTracking()
+                .Where(item => item.UserId == userId)
+                .OrderByDescending(item => item.IsActive)
+                .ThenBy(item => item.NextOccurrenceDateUtc)
+                .ThenByDescending(item => item.CreatedAtUtc)
+                .ToListAsync(cancellationToken);
+
+            return Results.Ok(recurringItems.Select(MapRecurring));
+        });
+
+        dashboardRoutes.MapPost("/recurring", async (RecurringTransactionUpsertRequest request, HttpContext httpContext, LealFinanceDbContext dbContext, CancellationToken cancellationToken) =>
+        {
+            if (!request.TryValidate(out var errors))
+            {
+                return Results.ValidationProblem(errors);
+            }
+
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var startDateUtc = NormalizeUtcDate(request.StartDate);
+
+            var recurring = new RecurringTransaction
+            {
+                UserId = userId,
+                Name = request.Name.Trim(),
+                Type = request.Type.Trim(),
+                Amount = request.Amount,
+                Category = request.Category.Trim(),
+                Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
+                StartDateUtc = startDateUtc,
+                FrequencyUnit = request.FrequencyUnit.Trim(),
+                FrequencyInterval = request.FrequencyInterval,
+                IsInfinite = request.IsInfinite,
+                MaxOccurrences = request.IsInfinite ? null : request.MaxOccurrences,
+                StartPaymentNumber = request.StartPaymentNumber,
+                GeneratedOccurrences = 0,
+                NextOccurrenceDateUtc = startDateUtc,
+                IsActive = true,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow
+            };
+
+            if (!recurring.IsInfinite && recurring.MaxOccurrences.HasValue && recurring.StartPaymentNumber > recurring.MaxOccurrences.Value)
+            {
+                recurring.IsActive = false;
+                recurring.NextOccurrenceDateUtc = null;
+            }
+
+            dbContext.RecurringTransactions.Add(recurring);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Created($"/api/dashboard/recurring/{recurring.Id}", MapRecurring(recurring));
+        });
+
+        dashboardRoutes.MapPut("/recurring/{recurringId:int}", async (int recurringId, RecurringTransactionUpsertRequest request, HttpContext httpContext, LealFinanceDbContext dbContext, CancellationToken cancellationToken) =>
+        {
+            if (!request.TryValidate(out var errors))
+            {
+                return Results.ValidationProblem(errors);
+            }
+
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var recurring = await dbContext.RecurringTransactions
+                .SingleOrDefaultAsync(item => item.Id == recurringId && item.UserId == userId, cancellationToken);
+
+            if (recurring is null)
+            {
+                return Results.NotFound(new { message = "Recurring transaction not found." });
+            }
+
+            recurring.Name = request.Name.Trim();
+            recurring.Type = request.Type.Trim();
+            recurring.Amount = request.Amount;
+            recurring.Category = request.Category.Trim();
+            recurring.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+            recurring.StartDateUtc = NormalizeUtcDate(request.StartDate);
+            recurring.FrequencyUnit = request.FrequencyUnit.Trim();
+            recurring.FrequencyInterval = request.FrequencyInterval;
+            recurring.IsInfinite = request.IsInfinite;
+            recurring.MaxOccurrences = request.IsInfinite ? null : request.MaxOccurrences;
+            recurring.StartPaymentNumber = request.StartPaymentNumber;
+
+            if (recurring.IsActive)
+            {
+                if (!recurring.IsInfinite
+                    && recurring.MaxOccurrences.HasValue
+                    && recurring.StartPaymentNumber + recurring.GeneratedOccurrences > recurring.MaxOccurrences.Value)
+                {
+                    recurring.IsActive = false;
+                    recurring.NextOccurrenceDateUtc = null;
+                }
+                else if (recurring.GeneratedOccurrences == 0)
+                {
+                    recurring.NextOccurrenceDateUtc = recurring.StartDateUtc;
+                }
+                else if (!recurring.NextOccurrenceDateUtc.HasValue)
+                {
+                    recurring.NextOccurrenceDateUtc = NormalizeUtcDate(DateTime.UtcNow);
+                }
+            }
+
+            recurring.UpdatedAtUtc = DateTime.UtcNow;
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(MapRecurring(recurring));
+        });
+
+        dashboardRoutes.MapDelete("/recurring/{recurringId:int}", async (int recurringId, HttpContext httpContext, LealFinanceDbContext dbContext, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var recurring = await dbContext.RecurringTransactions
+                .SingleOrDefaultAsync(item => item.Id == recurringId && item.UserId == userId, cancellationToken);
+
+            if (recurring is null)
+            {
+                return Results.NotFound(new { message = "Recurring transaction not found." });
+            }
+
+            recurring.IsActive = false;
+            recurring.NextOccurrenceDateUtc = null;
+            recurring.UpdatedAtUtc = DateTime.UtcNow;
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(new { message = "Recurring transaction canceled successfully." });
+        });
+
         return app;
     }
 
@@ -228,5 +375,38 @@ public static class DashboardEndpoints
             Date = transaction.Date,
             Notes = transaction.Notes
         };
+    }
+
+    private static RecurringTransactionResponse MapRecurring(RecurringTransaction recurring)
+    {
+        var nextPaymentNumber = recurring.StartPaymentNumber + recurring.GeneratedOccurrences;
+        int? remainingPayments = recurring.IsInfinite || !recurring.MaxOccurrences.HasValue
+            ? null
+            : Math.Max(0, recurring.MaxOccurrences.Value - nextPaymentNumber + 1);
+
+        return new RecurringTransactionResponse
+        {
+            Id = recurring.Id,
+            Name = recurring.Name,
+            Type = recurring.Type,
+            Amount = recurring.Amount,
+            Category = recurring.Category,
+            Notes = recurring.Notes,
+            StartDate = recurring.StartDateUtc,
+            FrequencyUnit = recurring.FrequencyUnit,
+            FrequencyInterval = recurring.FrequencyInterval,
+            IsInfinite = recurring.IsInfinite,
+            MaxOccurrences = recurring.MaxOccurrences,
+            StartPaymentNumber = recurring.StartPaymentNumber,
+            GeneratedOccurrences = recurring.GeneratedOccurrences,
+            NextOccurrenceDate = recurring.NextOccurrenceDateUtc,
+            IsActive = recurring.IsActive,
+            RemainingPayments = remainingPayments
+        };
+    }
+
+    private static DateTime NormalizeUtcDate(DateTime date)
+    {
+        return DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
     }
 }

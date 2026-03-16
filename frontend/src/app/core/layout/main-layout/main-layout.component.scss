@@ -1,0 +1,11 @@
+.layout-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.layout-content {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 1.25rem 1rem;
+}

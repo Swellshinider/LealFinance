@@ -1,37 +1,58 @@
-<section class="auth-card">
-  <h2>Register</h2>
+<section class="auth-page">
+  <mat-card class="auth-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Create your account</mat-card-title>
+      <mat-card-subtitle>Start managing your finances with confidence</mat-card-subtitle>
+    </mat-card-header>
 
-  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-    <label for="email">Email</label>
-    <input id="email" type="email" formControlName="email" />
-    @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
-      <small>Please enter a valid email.</small>
-    }
+    <mat-card-content>
+      <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput id="email" type="email" [maxLength]="emailMaxLength" formControlName="email" />
+          @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
+            <mat-error>Please enter a valid email.</mat-error>
+          }
+        </mat-form-field>
 
-    <label for="password">Password</label>
-    <input id="password" type="password" formControlName="password" />
-    @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
-      <small>Password must be at least 8 characters.</small>
-    }
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput id="password" type="password" formControlName="password" />
+          @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
+            <mat-error>Password must be at least 8 characters.</mat-error>
+          }
+        </mat-form-field>
 
-    <label for="confirmPassword">Confirm Password</label>
-    <input id="confirmPassword" type="password" formControlName="confirmPassword" />
-    @if (registerForm.touched && registerForm.errors?.['passwordMismatch']) {
-      <small>Passwords must match.</small>
-    }
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm password</mat-label>
+          <input matInput id="confirmPassword" type="password" formControlName="confirmPassword" />
+          @if (registerForm.touched && registerForm.errors?.['passwordMismatch']) {
+            <mat-error>Passwords must match.</mat-error>
+          }
+        </mat-form-field>
 
-    @if (errorMessage) {
-      <p class="error">{{ errorMessage }}</p>
-    }
+        @if (errorMessage) {
+          <p class="message error">{{ errorMessage }}</p>
+        }
 
-    @if (successMessage) {
-      <p class="success">{{ successMessage }}</p>
-    }
+        @if (successMessage) {
+          <p class="message success">{{ successMessage }}</p>
+        }
 
-    <button type="submit" [disabled]="isSubmitting">
-      {{ isSubmitting ? 'Creating account...' : 'Register' }}
-    </button>
-  </form>
+        <button mat-flat-button type="submit" color="primary" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <mat-spinner [diameter]="18"></mat-spinner>
+            <span>Creating account...</span>
+          } @else {
+            <span>Register</span>
+          }
+        </button>
+      </form>
+    </mat-card-content>
 
-  <p>Already registered? <a routerLink="/login">Sign in</a>.</p>
+    <mat-card-actions>
+      <p>Already registered?</p>
+      <a mat-button routerLink="/login">Sign in</a>
+    </mat-card-actions>
+  </mat-card>
 </section>

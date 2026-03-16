@@ -1,29 +1,4 @@
 :host {
 	display: block;
-	font-family: Inter, Arial, sans-serif;
-	color: #0f172a;
-}
-
-.app-shell {
-	max-width: 960px;
-	margin: 0 auto;
-	padding: 1.5rem;
-}
-
-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 1.25rem;
-}
-
-nav {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-}
-
-a,
-button {
-	font-size: 0.95rem;
+	min-height: 100dvh;
 }

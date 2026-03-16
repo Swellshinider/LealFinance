@@ -3,6 +3,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -28,7 +33,16 @@ function passwordMatchValidator(): ValidatorFn {
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterLink,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule
+  ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss'
 })
@@ -43,6 +57,9 @@ export class RegisterComponent {
 
   /** Indicates submission in progress. */
   public isSubmitting = false;
+
+  /** Maximum allowed e-mail length. */
+  public readonly emailMaxLength = 256;
 
   /** Reactive registration form. */
   public readonly registerForm = this.formBuilder.nonNullable.group(

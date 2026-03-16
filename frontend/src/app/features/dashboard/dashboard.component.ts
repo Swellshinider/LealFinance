@@ -1,5 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 interface DashboardSummaryResponse {
@@ -13,6 +15,7 @@ interface DashboardSummaryResponse {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
+  imports: [MatCardModule, MatProgressSpinnerModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -22,6 +25,9 @@ export class DashboardComponent implements OnInit {
 
   /** Generated timestamp from backend. */
   public generatedAtUtc = '';
+
+  /** Indicates summary request is still loading. */
+  public isLoading = true;
 
   public constructor(
     private readonly httpClient: HttpClient,
@@ -36,10 +42,12 @@ export class DashboardComponent implements OnInit {
       .get<DashboardSummaryResponse>('http://localhost:5216/api/dashboard/summary')
       .subscribe({
         next: (response: DashboardSummaryResponse) => {
+          this.isLoading = false;
           this.message = response.message;
           this.generatedAtUtc = response.generatedAtUtc;
         },
         error: (error: HttpErrorResponse) => {
+          this.isLoading = false;
           if (error.status === 401) {
             this.message = 'Your session has expired. Please log in again.';
             void this.router.navigate(['/login']);

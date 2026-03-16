@@ -1,15 +1,1 @@
-<main class="app-shell">
-  <header>
-    <h1>LealFinance</h1>
-    <nav>
-      <a routerLink="/dashboard">Dashboard</a>
-      <a routerLink="/register">Register</a>
-      <a routerLink="/login">Login</a>
-      @if (isAuthenticated()) {
-        <button type="button" (click)="logout()">Logout</button>
-      }
-    </nav>
-  </header>
-
-  <router-outlet />
-</main>
+<router-outlet></router-outlet>

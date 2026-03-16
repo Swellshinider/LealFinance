@@ -1,0 +1,13 @@
+<mat-toolbar color="primary" class="header-toolbar">
+  <a class="brand" routerLink="/" aria-label="LealFinance home">LealFinance</a>
+
+  <span class="spacer"></span>
+
+  @if (!isAuthenticated()) {
+    <a mat-button routerLink="/login" routerLinkActive="active-link">Login</a>
+    <a mat-button routerLink="/register" routerLinkActive="active-link">Register</a>
+  } @else {
+    <a mat-button routerLink="/dashboard" routerLinkActive="active-link">Dashboard</a>
+    <button mat-stroked-button type="button" (click)="logout()">Logout</button>
+  }
+</mat-toolbar>

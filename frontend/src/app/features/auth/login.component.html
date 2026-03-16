@@ -1,27 +1,46 @@
-<section class="auth-card">
-  <h2>Login</h2>
+<section class="auth-page">
+  <mat-card class="auth-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Welcome back</mat-card-title>
+      <mat-card-subtitle>Sign in to your LealFinance account</mat-card-subtitle>
+    </mat-card-header>
 
-  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-    <label for="email">Email</label>
-    <input id="email" type="email" formControlName="email" />
-    @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
-      <small>Please enter a valid email.</small>
-    }
+    <mat-card-content>
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput id="email" type="email" [maxLength]="emailMaxLength" formControlName="email" />
+          @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
+            <mat-error>Please enter a valid email.</mat-error>
+          }
+        </mat-form-field>
 
-    <label for="password">Password</label>
-    <input id="password" type="password" formControlName="password" />
-    @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
-      <small>Password must be at least 8 characters.</small>
-    }
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput id="password" type="password" formControlName="password" />
+          @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+            <mat-error>Password must be at least 8 characters.</mat-error>
+          }
+        </mat-form-field>
 
-    @if (errorMessage) {
-      <p class="error">{{ errorMessage }}</p>
-    }
+        @if (errorMessage) {
+          <p class="message error">{{ errorMessage }}</p>
+        }
 
-    <button type="submit" [disabled]="isSubmitting">
-      {{ isSubmitting ? 'Signing in...' : 'Login' }}
-    </button>
-  </form>
+        <button mat-flat-button type="submit" color="primary" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <mat-spinner [diameter]="18"></mat-spinner>
+            <span>Signing in...</span>
+          } @else {
+            <span>Login</span>
+          }
+        </button>
+      </form>
+    </mat-card-content>
 
-  <p>No account? <a routerLink="/register">Register here</a>.</p>
+    <mat-card-actions>
+      <p>No account?</p>
+      <a mat-button routerLink="/register">Register here</a>
+    </mat-card-actions>
+  </mat-card>
 </section>

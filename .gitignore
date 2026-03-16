@@ -1,0 +1,8 @@
+# build files
+**/bin
+**/obj
+**/dist
+
+# Reports
+**/coverage
+**/reports

@@ -1,0 +1,6 @@
+@LealFinance.Api_HostAddress = http://localhost:5216
+
+GET {{LealFinance.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

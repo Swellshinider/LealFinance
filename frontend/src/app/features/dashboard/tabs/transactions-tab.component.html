@@ -26,8 +26,9 @@
             formControlName="category"
             maxlength="100"
             [matAutocomplete]="categoryAutocomplete"
+            matTooltip="Select an existing category or type a new one."
+            matTooltipPosition="above"
             (input)="onCategoryInput()" />
-          <mat-hint>Select an existing category or type a new one.</mat-hint>
           <mat-autocomplete #categoryAutocomplete="matAutocomplete" autoActiveFirstOption>
             @for (existingCategory of filteredCategorySuggestions; track existingCategory) {
               <mat-option [value]="existingCategory">{{ existingCategory }}</mat-option>
@@ -63,7 +64,8 @@
 
   <mat-card appearance="outlined" class="table-card">
     <mat-card-header>
-      <mat-card-title>Transaction history</mat-card-title>
+      <mat-card-title>Transaction history (latest 5)</mat-card-title>
+      <mat-card-subtitle>Showing only the most recent 5 transactions</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
       @if (isLoading) {
@@ -118,6 +120,10 @@
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
           </table>
+        </div>
+
+        <div class="history-actions">
+          <button mat-stroked-button color="primary" type="button" (click)="openAllTransactions()">See all transactions</button>
         </div>
       }
     </mat-card-content>

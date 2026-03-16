@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -31,7 +32,8 @@ import { DashboardService, DashboardTransaction, TransactionUpsertRequest } from
     MatSelectModule,
     MatButtonModule,
     MatTableModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatTooltipModule
   ],
   templateUrl: './transactions-tab.component.html',
   styleUrl: './transactions-tab.component.scss'
@@ -59,8 +61,14 @@ export class TransactionsTabComponent implements OnInit {
   /** Current rows shown in table. */
   public transactions: DashboardTransaction[] = [];
 
+  /** Full user transactions list used for local updates and suggestions. */
+  public allTransactions: DashboardTransaction[] = [];
+
   /** Edited transaction identifier. Null means create mode. */
   public editingTransactionId: number | null = null;
+
+  /** Maximum number of rows displayed in the history preview grid. */
+  public readonly previewLimit = 5;
 
   /** All existing user categories extracted from transaction history. */
   public categorySuggestions: string[] = [];
@@ -140,7 +148,8 @@ export class TransactionsTabComponent implements OnInit {
       .subscribe({
         next: (savedTransaction: DashboardTransaction) => {
           this.runInAngular(() => {
-            this.upsertTransaction(savedTransaction);
+            this.upsertTransactionInAll(savedTransaction);
+            this.refreshVisibleTransactions();
             this.dashboardService.notifyTransactionsChanged();
             this.resetForm();
           });
@@ -193,7 +202,8 @@ export class TransactionsTabComponent implements OnInit {
       .subscribe({
         next: () => {
           this.runInAngular(() => {
-            this.transactions = this.transactions.filter((row) => row.id !== transaction.id);
+            this.allTransactions = this.allTransactions.filter((row) => row.id !== transaction.id);
+            this.refreshVisibleTransactions();
             this.refreshCategorySuggestionsFromTransactions();
             this.dashboardService.notifyTransactionsChanged();
             if (this.editingTransactionId === transaction.id) {
@@ -214,6 +224,13 @@ export class TransactionsTabComponent implements OnInit {
     this.resetForm();
   }
 
+  /**
+   * Opens the full transaction history page.
+   */
+  public openAllTransactions(): void {
+    void this.router.navigate(['/dashboard/transactions-history']);
+  }
+
   private loadTransactions(): void {
     this.runInAngular(() => {
       this.isLoading = true;
@@ -232,7 +249,8 @@ export class TransactionsTabComponent implements OnInit {
       .subscribe({
         next: (response: DashboardTransaction[]) => {
           this.runInAngular(() => {
-            this.transactions = this.sortTransactions(response);
+            this.allTransactions = this.sortTransactions(response);
+            this.refreshVisibleTransactions();
             this.refreshCategorySuggestionsFromTransactions();
           });
         },
@@ -270,21 +288,25 @@ export class TransactionsTabComponent implements OnInit {
     });
   }
 
-  private upsertTransaction(transaction: DashboardTransaction): void {
-    const existingIndex = this.transactions.findIndex((row) => row.id === transaction.id);
+  private upsertTransactionInAll(transaction: DashboardTransaction): void {
+    const existingIndex = this.allTransactions.findIndex((row) => row.id === transaction.id);
     if (existingIndex >= 0) {
-      this.transactions = this.transactions.map((row) => (row.id === transaction.id ? transaction : row));
+      this.allTransactions = this.allTransactions.map((row) => (row.id === transaction.id ? transaction : row));
     } else {
-      this.transactions = [...this.transactions, transaction];
+      this.allTransactions = [...this.allTransactions, transaction];
     }
 
-    this.transactions = this.sortTransactions(this.transactions);
+    this.allTransactions = this.sortTransactions(this.allTransactions);
     this.refreshCategorySuggestionsFromTransactions();
+  }
+
+  private refreshVisibleTransactions(): void {
+    this.transactions = this.allTransactions.slice(0, this.previewLimit);
   }
 
   private refreshCategorySuggestionsFromTransactions(): void {
     this.categorySuggestions = [...new Set(
-      this.transactions
+      this.allTransactions
         .map((transaction: DashboardTransaction) => transaction.category.trim())
         .filter((category: string) => category.length > 0)
     )].sort((left: string, right: string) => left.localeCompare(right));

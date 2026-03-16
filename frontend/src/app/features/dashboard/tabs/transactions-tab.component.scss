@@ -34,6 +34,12 @@
   overflow-x: auto;
 }
 
+.history-actions {
+  margin-top: 0.9rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
 table {
   width: 100%;
 }

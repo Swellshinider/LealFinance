@@ -1,0 +1,49 @@
+.transactions-history-page {
+  padding-top: 1rem;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.error-message {
+  color: #b91c1c;
+}
+
+.income {
+  color: #166534;
+  font-weight: 600;
+}
+
+.expense {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.muted {
+  color: rgba(15, 23, 42, 0.72);
+}

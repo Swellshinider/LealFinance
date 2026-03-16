@@ -1,4 +1,76 @@
 <section class="reports-tab">
+  <mat-card appearance="outlined" class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Report filters</mat-card-title>
+      <mat-card-subtitle>Refine charts by time, category, and transaction type</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="reportFiltersForm" class="filters-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Date filter</mat-label>
+          <mat-select formControlName="dateMode">
+            @for (mode of dateFilterModes; track mode.value) {
+              <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (reportFiltersForm.controls.dateMode.value === 'upTo') {
+          <mat-form-field appearance="outline">
+            <mat-label>Up to date</mat-label>
+            <input matInput type="date" formControlName="upToDate" />
+          </mat-form-field>
+        }
+
+        @if (reportFiltersForm.controls.dateMode.value === 'range') {
+          <mat-form-field appearance="outline">
+            <mat-label>From date</mat-label>
+            <input matInput type="date" formControlName="fromDate" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>To date</mat-label>
+            <input matInput type="date" formControlName="toDate" />
+          </mat-form-field>
+        }
+
+        @if (reportFiltersForm.controls.dateMode.value === 'fixed') {
+          <mat-form-field appearance="outline">
+            <mat-label>Fixed period</mat-label>
+            <mat-select formControlName="fixedRange">
+              @for (fixedRange of fixedDateRanges; track fixedRange.value) {
+                <mat-option [value]="fixedRange.value">{{ fixedRange.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline">
+          <mat-label>Category</mat-label>
+          <mat-select formControlName="category">
+            <mat-option value="all">All categories</mat-option>
+            @for (category of categoryOptions; track category) {
+              <mat-option [value]="category">{{ category }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Transaction type</mat-label>
+          <mat-select formControlName="type">
+            @for (typeOption of typeOptions; track typeOption.value) {
+              <mat-option [value]="typeOption.value">{{ typeOption.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-stroked-button type="button" (click)="resetFilters()">Reset filters</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
   @if (isLoading) {
     <div class="loading-state">
       <mat-spinner [diameter]="32"></mat-spinner>

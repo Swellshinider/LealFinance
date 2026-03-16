@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, NgZone, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, NgZone, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
@@ -21,6 +22,7 @@ import { DashboardService, DashboardSummaryResponse, DashboardTransaction } from
 export class SummaryTabComponent implements OnInit {
   private readonly ngZone = inject(NgZone);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Indicates summary data loading state. */
   public isLoading = true;
@@ -43,6 +45,21 @@ export class SummaryTabComponent implements OnInit {
    * Loads summary data from the protected endpoint.
    */
   public ngOnInit(): void {
+    this.dashboardService.transactionsChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loadSummary();
+      });
+
+    this.loadSummary();
+  }
+
+  private loadSummary(): void {
+    this.runInAngular(() => {
+      this.isLoading = true;
+      this.message = '';
+    });
+
     this.dashboardService
       .getSummary()
       .pipe(
@@ -57,7 +74,6 @@ export class SummaryTabComponent implements OnInit {
           this.runInAngular(() => {
             this.totalCurrentBalance = response.totalCurrentBalance;
             this.recentTransactions = response.recentTransactions;
-            this.message = '';
           });
         },
         error: (error: unknown) => {

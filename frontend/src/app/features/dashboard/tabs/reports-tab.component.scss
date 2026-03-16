@@ -1,5 +1,17 @@
 .reports-tab {
+  display: grid;
+  gap: 1rem;
   padding-top: 1rem;
+}
+
+.filters-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.filter-actions {
+  grid-column: 1 / -1;
 }
 
 .loading-state {

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, timeout } from 'rxjs';
+import { Observable, Subject, timeout } from 'rxjs';
 
 /**
  * Summary transaction card item.
@@ -79,12 +79,28 @@ export interface DashboardReportsResponse {
 }
 
 /**
+ * Supported report fixed date ranges.
+ */
+export type ReportFixedDateRange = 'day' | 'week' | 'month' | 'sixMonths' | 'year';
+
+/**
+ * Supported transaction type filters for reports.
+ */
+export type ReportTransactionTypeFilter = 'all' | 'Income' | 'Expense';
+
+/**
  * Protected dashboard API client.
  */
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly apiBaseUrl = 'http://localhost:5216/api/dashboard';
   private readonly requestTimeoutMs = 15000;
+  private readonly transactionsChangedSubject = new Subject<void>();
+
+  /**
+   * Emits when any transaction create, update, or delete operation succeeds.
+   */
+  public readonly transactionsChanged$ = this.transactionsChangedSubject.asObservable();
 
   public constructor(private readonly httpClient: HttpClient) {}
 
@@ -140,5 +156,12 @@ export class DashboardService {
     return this.httpClient
       .get<DashboardReportsResponse>(`${this.apiBaseUrl}/reports`)
       .pipe(timeout(this.requestTimeoutMs));
+  }
+
+  /**
+   * Broadcasts a transaction data change event to all dashboard tabs.
+   */
+  public notifyTransactionsChanged(): void {
+    this.transactionsChangedSubject.next();
   }
 }

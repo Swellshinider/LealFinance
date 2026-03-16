@@ -13,11 +13,7 @@ import { MatTableModule } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import {
-  DashboardService,
-  DashboardTransaction,
-  TransactionUpsertRequest
-} from '../../../core/services/dashboard.service';
+import { DashboardService, DashboardTransaction, TransactionUpsertRequest } from '../../../core/services/dashboard.service';
 
 /**
  * Displays transactions CRUD operations inside the dashboard.
@@ -142,10 +138,11 @@ export class TransactionsTabComponent implements OnInit {
         })
       )
       .subscribe({
-        next: () => {
+        next: (savedTransaction: DashboardTransaction) => {
           this.runInAngular(() => {
+            this.upsertTransaction(savedTransaction);
+            this.dashboardService.notifyTransactionsChanged();
             this.resetForm();
-            this.loadTransactions();
           });
         },
         error: (error: unknown) => {
@@ -197,6 +194,8 @@ export class TransactionsTabComponent implements OnInit {
         next: () => {
           this.runInAngular(() => {
             this.transactions = this.transactions.filter((row) => row.id !== transaction.id);
+            this.refreshCategorySuggestionsFromTransactions();
+            this.dashboardService.notifyTransactionsChanged();
             if (this.editingTransactionId === transaction.id) {
               this.resetForm();
             }
@@ -216,7 +215,10 @@ export class TransactionsTabComponent implements OnInit {
   }
 
   private loadTransactions(): void {
-    this.isLoading = true;
+    this.runInAngular(() => {
+      this.isLoading = true;
+      this.message = '';
+    });
 
     this.dashboardService
       .getTransactions()
@@ -230,13 +232,8 @@ export class TransactionsTabComponent implements OnInit {
       .subscribe({
         next: (response: DashboardTransaction[]) => {
           this.runInAngular(() => {
-            this.transactions = response;
-            this.categorySuggestions = [...new Set(
-              response
-                .map((transaction: DashboardTransaction) => transaction.category.trim())
-                .filter((category: string) => category.length > 0)
-            )].sort((left: string, right: string) => left.localeCompare(right));
-            this.filterCategorySuggestions(this.transactionForm.controls.category.value);
+            this.transactions = this.sortTransactions(response);
+            this.refreshCategorySuggestionsFromTransactions();
           });
         },
         error: (error: unknown) => {
@@ -270,6 +267,39 @@ export class TransactionsTabComponent implements OnInit {
       category: '',
       date: this.getTodayIsoDate(),
       notes: ''
+    });
+  }
+
+  private upsertTransaction(transaction: DashboardTransaction): void {
+    const existingIndex = this.transactions.findIndex((row) => row.id === transaction.id);
+    if (existingIndex >= 0) {
+      this.transactions = this.transactions.map((row) => (row.id === transaction.id ? transaction : row));
+    } else {
+      this.transactions = [...this.transactions, transaction];
+    }
+
+    this.transactions = this.sortTransactions(this.transactions);
+    this.refreshCategorySuggestionsFromTransactions();
+  }
+
+  private refreshCategorySuggestionsFromTransactions(): void {
+    this.categorySuggestions = [...new Set(
+      this.transactions
+        .map((transaction: DashboardTransaction) => transaction.category.trim())
+        .filter((category: string) => category.length > 0)
+    )].sort((left: string, right: string) => left.localeCompare(right));
+
+    this.filterCategorySuggestions(this.transactionForm.controls.category.value);
+  }
+
+  private sortTransactions(transactions: DashboardTransaction[]): DashboardTransaction[] {
+    return [...transactions].sort((left: DashboardTransaction, right: DashboardTransaction) => {
+      const dateDifference = new Date(right.date).getTime() - new Date(left.date).getTime();
+      if (dateDifference !== 0) {
+        return dateDifference;
+      }
+
+      return right.id - left.id;
     });
   }
 

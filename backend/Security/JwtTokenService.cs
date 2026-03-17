@@ -28,7 +28,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.Email)
+            new Claim(ClaimTypes.Name, user.FullName)
         };
 
         var tokenDescriptor = new JwtSecurityToken(
@@ -44,6 +44,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         {
             Token = tokenValue,
             Email = user.Email,
+            FullName = user.FullName,
+            ProfilePhotoUrl = null,
             ExpiresAtUtc = expiresAtUtc
         };
     }

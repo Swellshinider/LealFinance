@@ -3,7 +3,9 @@ using LealFinance.Api.Data;
 using LealFinance.Api.Entities;
 using LealFinance.Api.Models.Auth;
 using LealFinance.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,6 +27,7 @@ public static class AuthEndpoints
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         var authRoutes = app.MapGroup("/api/auth");
+        var authProtectedRoutes = authRoutes.MapGroup(string.Empty).RequireAuthorization();
 
         authRoutes.MapPost("/register", async (RegisterRequest request, LealFinanceDbContext dbContext, IPasswordHasher passwordHasher, CancellationToken cancellationToken) =>
         {
@@ -43,6 +46,7 @@ public static class AuthEndpoints
             var user = new User
             {
                 Email = normalizedEmail,
+                FullName = request.FullName.Trim(),
                 PasswordHash = passwordHasher.HashPassword(request.Password),
                 CreatedAtUtc = DateTime.UtcNow
             };
@@ -153,7 +157,81 @@ public static class AuthEndpoints
             }
         });
 
+        authProtectedRoutes.MapGet("/profile", async (HttpContext httpContext, LealFinanceDbContext dbContext, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await dbContext.Users
+                .AsNoTracking()
+                .SingleOrDefaultAsync(entity => entity.Id == userId, cancellationToken);
+
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User profile not found." });
+            }
+
+            return Results.Ok(new ProfileResponse
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                ProfilePhotoUrl = user.ProfilePhotoUrl
+            });
+        });
+
+        authProtectedRoutes.MapPut("/profile", async (UpdateProfileRequest request, HttpContext httpContext, LealFinanceDbContext dbContext, CancellationToken cancellationToken) =>
+        {
+            if (!request.TryValidate(out var errors))
+            {
+                return Results.ValidationProblem(errors);
+            }
+
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await dbContext.Users.SingleOrDefaultAsync(entity => entity.Id == userId, cancellationToken);
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User profile not found." });
+            }
+
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+            var emailInUse = await dbContext.Users.AnyAsync(
+                entity => entity.Email == normalizedEmail && entity.Id != userId,
+                cancellationToken);
+
+            if (emailInUse)
+            {
+                return Results.Conflict(new { message = "A user with this e-mail already exists." });
+            }
+
+            user.FullName = request.FullName.Trim();
+            user.Email = normalizedEmail;
+            user.ProfilePhotoUrl = string.IsNullOrWhiteSpace(request.ProfilePhotoUrl)
+                ? null
+                : request.ProfilePhotoUrl.Trim();
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(new ProfileResponse
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                ProfilePhotoUrl = user.ProfilePhotoUrl
+            });
+        });
+
         return app;
+    }
+
+    private static bool TryGetUserId(ClaimsPrincipal user, out int userId)
+    {
+        var userIdValue = user.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(userIdValue, out userId);
     }
 
     private static string GenerateSecureRefreshToken()

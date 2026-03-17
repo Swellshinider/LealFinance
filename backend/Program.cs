@@ -68,6 +68,7 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<LealFinanceDbContext>();
     dbContext.Database.EnsureCreated();
     EnsureAuthRefreshTokenColumns(databasePath);
+    EnsureUserProfileColumns(databasePath);
     EnsureTransactionsTable(databasePath);
     EnsureRecurringTransactionsTable(databasePath);
     EnsureRecurringColumnsOnTransactions(databasePath);
@@ -117,6 +118,49 @@ static void EnsureAuthRefreshTokenColumns(string sqliteDatabasePath)
         alterRefreshTokenExpiryCommand.CommandText = "ALTER TABLE Users ADD COLUMN RefreshTokenExpiryTime TEXT NULL;";
         alterRefreshTokenExpiryCommand.ExecuteNonQuery();
     }
+}
+
+static void EnsureUserProfileColumns(string sqliteDatabasePath)
+{
+    using var connection = new SqliteConnection($"Data Source={sqliteDatabasePath}");
+    connection.Open();
+
+    using var tableInfoCommand = connection.CreateCommand();
+    tableInfoCommand.CommandText = "PRAGMA table_info(Users);";
+
+    var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    using (var reader = tableInfoCommand.ExecuteReader())
+    {
+        while (reader.Read())
+        {
+            existingColumns.Add(reader.GetString(1));
+        }
+    }
+
+    if (!existingColumns.Contains("FullName"))
+    {
+        using var alterFullNameCommand = connection.CreateCommand();
+        alterFullNameCommand.CommandText = "ALTER TABLE Users ADD COLUMN FullName TEXT NULL;";
+        alterFullNameCommand.ExecuteNonQuery();
+    }
+
+    if (!existingColumns.Contains("ProfilePhotoUrl"))
+    {
+        using var alterProfilePhotoUrlCommand = connection.CreateCommand();
+        alterProfilePhotoUrlCommand.CommandText = "ALTER TABLE Users ADD COLUMN ProfilePhotoUrl TEXT NULL;";
+        alterProfilePhotoUrlCommand.ExecuteNonQuery();
+    }
+
+    using var fillMissingNamesCommand = connection.CreateCommand();
+    fillMissingNamesCommand.CommandText = """
+        UPDATE Users
+        SET FullName = CASE
+            WHEN instr(Email, '@') > 1 THEN substr(Email, 1, instr(Email, '@') - 1)
+            ELSE Email
+        END
+        WHERE FullName IS NULL OR trim(FullName) = '';
+        """;
+    fillMissingNamesCommand.ExecuteNonQuery();
 }
 
 static void EnsureTransactionsTable(string sqliteDatabasePath)

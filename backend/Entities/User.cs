@@ -20,6 +20,13 @@ public sealed class User
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the user's full display name.
+    /// </summary>
+    [Required]
+    [MaxLength(120)]
+    public string FullName { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the Argon2id password hash payload.
     /// </summary>
     [Required]
@@ -40,4 +47,10 @@ public sealed class User
     /// Gets or sets the UTC expiration timestamp for the current refresh token.
     /// </summary>
     public DateTime? RefreshTokenExpiryTime { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional profile photo URL or data URL.
+    /// </summary>
+    [MaxLength(10000000)]
+    public string? ProfilePhotoUrl { get; set; }
 }

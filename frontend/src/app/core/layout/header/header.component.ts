@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
-import { AuthService } from '../../services/auth.service';
+import { AuthService, UserProfile } from '../../services/auth.service';
 
 /**
  * Application header with authentication-aware navigation actions.
@@ -12,15 +13,38 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatMenuModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
+  /** Cached authenticated profile data. */
+  public userProfile: UserProfile | null = null;
+
+  /** Fallback avatar image used when profile photo is missing. */
+  public readonly defaultAvatarUrl = '/default-avatar.svg';
+
   public constructor(
     private readonly authService: AuthService,
     private readonly router: Router
   ) {}
+
+  /**
+   * Loads profile data when a session exists.
+   */
+  public ngOnInit(): void {
+    this.authService.userProfile$.subscribe((profile: UserProfile | null) => {
+      this.userProfile = profile;
+    });
+
+    if (this.isAuthenticated()) {
+      this.authService.getProfile().subscribe({
+        error: () => {
+          this.userProfile = null;
+        }
+      });
+    }
+  }
 
   /**
    * Returns whether a valid user session exists.
@@ -35,5 +59,20 @@ export class HeaderComponent {
   public logout(): void {
     this.authService.logout();
     void this.router.navigate(['/login']);
+  }
+
+  /**
+   * Navigates to the profile page.
+   */
+  public goToProfile(): void {
+    void this.router.navigate(['/profile']);
+  }
+
+  /**
+   * Returns the current avatar image source.
+   */
+  public getProfileAvatarUrl(): string {
+    const profilePhotoUrl = this.userProfile?.profilePhotoUrl?.trim();
+    return profilePhotoUrl ? profilePhotoUrl : this.defaultAvatarUrl;
   }
 }

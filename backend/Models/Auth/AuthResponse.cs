@@ -21,6 +21,16 @@ public sealed class AuthResponse
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the authenticated user's full display name.
+    /// </summary>
+    public string FullName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the optional profile photo URL or data URL.
+    /// </summary>
+    public string? ProfilePhotoUrl { get; set; }
+
+    /// <summary>
     /// Gets or sets the issued refresh token.
     /// </summary>
     public string? RefreshToken { get; set; }

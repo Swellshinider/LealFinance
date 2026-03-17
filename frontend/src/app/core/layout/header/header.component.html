@@ -8,6 +8,19 @@
     <a mat-button routerLink="/register" routerLinkActive="active-link">Register</a>
   } @else {
     <a mat-button routerLink="/dashboard" routerLinkActive="active-link">Dashboard</a>
-    <button mat-stroked-button type="button" (click)="logout()">Logout</button>
+
+    <button
+      mat-icon-button
+      [matMenuTriggerFor]="profileMenu"
+      type="button"
+      class="profile-trigger"
+      aria-label="Open profile menu">
+      <img [src]="getProfileAvatarUrl()" alt="User profile avatar" class="profile-avatar" />
+    </button>
+
+    <mat-menu #profileMenu="matMenu">
+      <button mat-menu-item type="button" (click)="goToProfile()">Profile</button>
+      <button mat-menu-item type="button" (click)="logout()">Logout</button>
+    </mat-menu>
   }
 </mat-toolbar>

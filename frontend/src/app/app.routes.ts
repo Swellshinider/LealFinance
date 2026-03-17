@@ -6,6 +6,7 @@ import { RegisterComponent } from './features/auth/register.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { LandingComponent } from './features/landing/landing.component';
 import { TransactionsHistoryPageComponent } from './features/dashboard/transactions-history-page/transactions-history-page.component';
+import { ProfileComponent } from './features/profile/profile.component';
 
 export const routes: Routes = [
 	{
@@ -32,6 +33,11 @@ export const routes: Routes = [
 			{
 				path: 'dashboard/transactions-history',
 				component: TransactionsHistoryPageComponent,
+				canActivate: [authGuard]
+			},
+			{
+				path: 'profile',
+				component: ProfileComponent,
 				canActivate: [authGuard]
 			},
 			{

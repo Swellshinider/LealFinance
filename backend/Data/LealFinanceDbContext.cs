@@ -31,10 +31,12 @@ public sealed class LealFinanceDbContext(DbContextOptions<LealFinanceDbContext> 
             entity.HasKey(user => user.Id);
             entity.HasIndex(user => user.Email).IsUnique();
             entity.Property(user => user.Email).IsRequired().HasMaxLength(256);
+            entity.Property(user => user.FullName).IsRequired().HasMaxLength(120);
             entity.Property(user => user.PasswordHash).IsRequired();
             entity.Property(user => user.CreatedAtUtc).IsRequired();
             entity.Property(user => user.RefreshToken).HasMaxLength(512);
             entity.Property(user => user.RefreshTokenExpiryTime);
+            entity.Property(user => user.ProfilePhotoUrl).HasMaxLength(10000000);
         });
 
         modelBuilder.Entity<Transaction>(entity =>

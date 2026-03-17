@@ -7,6 +7,18 @@
 
     <mat-card-content>
       <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <p class="master-password-warning">
+          Warning: Your master password can never be changed. Keep it safe.
+        </p>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Full name</mat-label>
+          <input matInput id="fullName" type="text" [maxLength]="fullNameMaxLength" formControlName="fullName" />
+          @if (registerForm.controls.fullName.touched && registerForm.controls.fullName.invalid) {
+            <mat-error>Full name is required.</mat-error>
+          }
+        </mat-form-field>
+
         <mat-form-field appearance="outline">
           <mat-label>Email</mat-label>
           <input matInput id="email" type="email" [maxLength]="emailMaxLength" formControlName="email" />
@@ -18,6 +30,7 @@
         <mat-form-field appearance="outline">
           <mat-label>Password</mat-label>
           <input matInput id="password" type="password" formControlName="password" />
+          <mat-hint [class.strength-warning]="isPasswordStrengthWarning">{{ passwordStrengthMessage }}</mat-hint>
           @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
             <mat-error>Password must be at least 8 characters.</mat-error>
           }

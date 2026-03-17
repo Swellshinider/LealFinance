@@ -61,9 +61,13 @@ export class RegisterComponent {
   /** Maximum allowed e-mail length. */
   public readonly emailMaxLength = 256;
 
+  /** Maximum allowed full-name length. */
+  public readonly fullNameMaxLength = 120;
+
   /** Reactive registration form. */
   public readonly registerForm = this.formBuilder.nonNullable.group(
     {
+      fullName: ['', [Validators.required, Validators.maxLength(this.fullNameMaxLength)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]]
@@ -75,6 +79,39 @@ export class RegisterComponent {
     private readonly authService: AuthService,
     private readonly router: Router
   ) {}
+
+  /**
+   * Returns password strength guidance while user types.
+   */
+  public get passwordStrengthMessage(): string {
+    const password = this.registerForm.controls.password.value;
+    if (!password) {
+      return 'Use at least 12 characters with uppercase, lowercase, number and symbol.';
+    }
+
+    const score = this.getPasswordStrengthScore(password);
+    if (score <= 2) {
+      return 'Weak master password. Strengthen it before creating your account.';
+    }
+
+    if (score === 3) {
+      return 'Moderate master password. Consider adding more complexity.';
+    }
+
+    if (score === 4) {
+      return 'Strong master password.';
+    }
+
+    return 'Very strong master password.';
+  }
+
+  /**
+   * Returns whether the current strength should be shown as warning.
+   */
+  public get isPasswordStrengthWarning(): boolean {
+    const password = this.registerForm.controls.password.value;
+    return !!password && this.getPasswordStrengthScore(password) <= 2;
+  }
 
   /**
    * Submits registration data.
@@ -91,6 +128,7 @@ export class RegisterComponent {
     this.isSubmitting = true;
 
     const payload: RegisterRequest = {
+      fullName: this.registerForm.controls.fullName.value,
       email: this.registerForm.controls.email.value,
       password: this.registerForm.controls.password.value
     };
@@ -118,5 +156,35 @@ export class RegisterComponent {
           this.errorMessage = 'Registration failed. Please try again.';
         }
       });
+  }
+
+  private getPasswordStrengthScore(password: string): number {
+    let score = 0;
+
+    if (password.length >= 8) {
+      score += 1;
+    }
+
+    if (password.length >= 12) {
+      score += 1;
+    }
+
+    if (/[A-Z]/.test(password)) {
+      score += 1;
+    }
+
+    if (/[a-z]/.test(password)) {
+      score += 1;
+    }
+
+    if (/\d/.test(password)) {
+      score += 1;
+    }
+
+    if (/[^A-Za-z0-9]/.test(password)) {
+      score += 1;
+    }
+
+    return score;
   }
 }

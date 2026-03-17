@@ -15,6 +15,21 @@
   margin-top: 1rem;
 }
 
+.master-password-warning {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-left: 4px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  border-radius: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.strength-warning {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
 mat-form-field,
 button {
   width: 100%;

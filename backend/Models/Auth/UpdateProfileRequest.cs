@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 namespace LealFinance.Api.Models.Auth;
 
 /// <summary>
-/// Represents the payload for user registration.
+/// Represents the payload used to update the authenticated user profile.
 /// </summary>
-public sealed class RegisterRequest
+public sealed class UpdateProfileRequest
 {
     /// <summary>
-    /// Gets or sets the user's full name.
+    /// Gets or sets the full display name.
     /// </summary>
     [Required]
     [MaxLength(120)]
@@ -23,10 +23,8 @@ public sealed class RegisterRequest
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the plain password.
+    /// Gets or sets the optional profile photo URL or data URL.
     /// </summary>
-    [Required]
-    [MinLength(8)]
-    [MaxLength(128)]
-    public string Password { get; set; } = string.Empty;
+    [MaxLength(10000000)]
+    public string? ProfilePhotoUrl { get; set; }
 }

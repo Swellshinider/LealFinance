@@ -1,0 +1,87 @@
+.profile-page {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.profile-card {
+  width: min(100%, 640px);
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 140px;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.photo-section {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.photo-preview,
+.photo-placeholder {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.photo-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.upload-label {
+  cursor: pointer;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+input[type='file'] {
+  max-width: 240px;
+}
+
+mat-form-field,
+button {
+  width: 100%;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.message {
+  margin: 0.2rem 0;
+}
+
+.error {
+  color: var(--lf-danger);
+}
+
+.success {
+  color: var(--lf-success);
+}

@@ -1,0 +1,70 @@
+<section class="profile-page">
+  <mat-card class="profile-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>My profile</mat-card-title>
+      <mat-card-subtitle>Update your name, email and profile photo</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (isLoading) {
+        <div class="loading-state">
+          <mat-spinner [diameter]="28"></mat-spinner>
+          <span>Loading profile...</span>
+        </div>
+      } @else {
+        <form class="profile-form" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+          <div class="photo-section">
+            @if (profilePhotoPreview) {
+              <img [src]="profilePhotoPreview" alt="Profile photo preview" class="photo-preview" />
+            } @else {
+              <div class="photo-placeholder">No photo</div>
+            }
+
+            <div class="photo-actions">
+              <label class="upload-label" for="profilePhotoInput">Choose photo</label>
+              <input #profilePhotoInput id="profilePhotoInput" type="file" accept="image/*" (change)="onPhotoSelected($event)" />
+              <button mat-stroked-button type="button" (click)="clearPhoto()">Remove photo</button>
+            </div>
+          </div>
+
+          @if (photoValidationMessage) {
+            <p class="message error">{{ photoValidationMessage }}</p>
+          }
+
+          <mat-form-field appearance="outline">
+            <mat-label>Full name</mat-label>
+            <input matInput formControlName="fullName" [maxLength]="fullNameMaxLength" />
+            @if (profileForm.controls.fullName.touched && profileForm.controls.fullName.invalid) {
+              <mat-error>Full name is required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" [maxLength]="emailMaxLength" />
+            @if (profileForm.controls.email.touched && profileForm.controls.email.invalid) {
+              <mat-error>Please enter a valid email.</mat-error>
+            }
+          </mat-form-field>
+
+          @if (errorMessage) {
+            <p class="message error">{{ errorMessage }}</p>
+          }
+
+          @if (successMessage) {
+            <p class="message success">{{ successMessage }}</p>
+          }
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="isSaveDisabled">
+            @if (isSaving) {
+              <mat-spinner [diameter]="18"></mat-spinner>
+              <span>Saving...</span>
+            } @else {
+              <span>Save profile</span>
+            }
+          </button>
+        </form>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

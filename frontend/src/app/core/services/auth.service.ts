@@ -1,15 +1,41 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, tap, timeout } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, switchMap, tap, timeout } from 'rxjs';
 
 /**
  * Registration request payload.
  */
 export interface RegisterRequest {
+  /** User full display name. */
+  fullName: string;
   /** User e-mail address. */
   email: string;
   /** User plain password. */
   password: string;
+}
+
+/**
+ * Authenticated user profile payload.
+ */
+export interface UserProfile {
+  /** User full display name. */
+  fullName: string;
+  /** User e-mail. */
+  email: string;
+  /** Optional profile photo URL or data URL. */
+  profilePhotoUrl: string | null;
+}
+
+/**
+ * Profile update request payload.
+ */
+export interface UpdateProfileRequest {
+  /** User full display name. */
+  fullName: string;
+  /** User e-mail. */
+  email: string;
+  /** Optional profile photo URL or data URL. */
+  profilePhotoUrl: string | null;
 }
 
 /**
@@ -44,6 +70,10 @@ export interface AuthResponse {
   expiresAtUtc: string;
   /** Authenticated e-mail. */
   email: string;
+  /** Authenticated full name. */
+  fullName: string;
+  /** Optional profile photo URL or data URL. */
+  profilePhotoUrl: string | null;
   /** Issued refresh token when remember-me is enabled. */
   refreshToken: string | null;
   /** Refresh token expiration timestamp (UTC). */
@@ -67,6 +97,10 @@ export class AuthService {
   private readonly accessTokenStorageKey = 'lealfinance.jwt';
   private readonly refreshTokenStorageKey = 'lealfinance.refresh-token';
   private readonly requestTimeoutMs = 15000;
+  private readonly userProfileSubject = new BehaviorSubject<UserProfile | null>(null);
+
+  /** Current authenticated profile stream. */
+  public readonly userProfile$ = this.userProfileSubject.asObservable();
 
   public constructor(private readonly httpClient: HttpClient) {}
 
@@ -86,7 +120,15 @@ export class AuthService {
     return this.httpClient
       .post<AuthResponse>(`${this.apiBaseUrl}/login`, request)
       .pipe(timeout(this.requestTimeoutMs))
-      .pipe(tap((response: AuthResponse) => this.setTokens(response)));
+      .pipe(tap((response: AuthResponse) => this.setTokens(response)))
+      .pipe(
+        switchMap((response: AuthResponse) =>
+          this.getProfile().pipe(
+            map(() => response),
+            catchError(() => of(response))
+          )
+        )
+      );
   }
 
   /**
@@ -100,11 +142,39 @@ export class AuthService {
   }
 
   /**
+   * Fetches the authenticated user's profile.
+   */
+  public getProfile(): Observable<UserProfile> {
+    return this.httpClient
+      .get<UserProfile>(`${this.apiBaseUrl}/profile`)
+      .pipe(timeout(this.requestTimeoutMs))
+      .pipe(tap((profile: UserProfile) => this.setUserProfile(profile)));
+  }
+
+  /**
+   * Updates the authenticated user's profile.
+   */
+  public updateProfile(request: UpdateProfileRequest): Observable<UserProfile> {
+    return this.httpClient
+      .put<UserProfile>(`${this.apiBaseUrl}/profile`, request)
+      .pipe(timeout(this.requestTimeoutMs))
+      .pipe(tap((profile: UserProfile) => this.setUserProfile(profile)));
+  }
+
+  /**
+   * Gets the current cached user profile.
+   */
+  public getCurrentUserProfile(): UserProfile | null {
+    return this.userProfileSubject.value;
+  }
+
+  /**
    * Logs out the current user.
    */
   public logout(): void {
     localStorage.removeItem(this.accessTokenStorageKey);
     localStorage.removeItem(this.refreshTokenStorageKey);
+    this.userProfileSubject.next(null);
   }
 
   /**
@@ -141,12 +211,23 @@ export class AuthService {
   private setTokens(response: AuthResponse): void {
     localStorage.setItem(this.accessTokenStorageKey, response.token);
 
+    const currentProfile = this.userProfileSubject.value;
+    this.setUserProfile({
+      fullName: response.fullName,
+      email: response.email,
+      profilePhotoUrl: response.profilePhotoUrl ?? currentProfile?.profilePhotoUrl ?? null
+    });
+
     if (response.refreshToken) {
       localStorage.setItem(this.refreshTokenStorageKey, response.refreshToken);
       return;
     }
 
     localStorage.removeItem(this.refreshTokenStorageKey);
+  }
+
+  private setUserProfile(profile: UserProfile): void {
+    this.userProfileSubject.next(profile);
   }
 
   private getTokenExpiration(token: string): number | null {

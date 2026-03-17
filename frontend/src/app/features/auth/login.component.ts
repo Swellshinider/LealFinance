@@ -11,7 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { finalize, TimeoutError } from 'rxjs';
 
-import { AuthService, LoginRequest } from '../../core/services/auth.service';
+import { LoginRequest } from '../../core/models/auth';
+import { AuthService } from '../../core/services/auth.service';
 
 /**
  * Login view for user authentication.

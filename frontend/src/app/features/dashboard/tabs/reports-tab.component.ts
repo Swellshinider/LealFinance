@@ -15,11 +15,11 @@ import { BaseChartDirective } from 'ng2-charts';
 import { finalize } from 'rxjs';
 
 import {
-  DashboardService,
   DashboardTransaction,
   ReportFixedDateRange,
   ReportTransactionTypeFilter
-} from '../../../core/services/dashboard.service';
+} from '../../../core/models/dashboard';
+import { DashboardService } from '../../../core/services/dashboard.service';
 
 /**
  * Supported date filter modes.

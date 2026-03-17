@@ -5,7 +5,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
-import { AuthService, UserProfile } from '../../services/auth.service';
+import { UserProfile } from '../../models/auth';
+import { AuthService } from '../../services/auth.service';
 
 /**
  * Application header with authentication-aware navigation actions.

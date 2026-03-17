@@ -15,11 +15,11 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import {
-  DashboardService,
   RecurringFrequencyUnit,
   RecurringTransaction,
   RecurringTransactionUpsertRequest
-} from '../../../core/services/dashboard.service';
+} from '../../../core/models/dashboard';
+import { DashboardService } from '../../../core/services/dashboard.service';
 
 /**
  * Displays recurring transaction schedule management.

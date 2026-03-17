@@ -14,7 +14,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { DashboardService, DashboardTransaction, TransactionUpsertRequest } from '../../../core/services/dashboard.service';
+import { DashboardTransaction, TransactionUpsertRequest } from '../../../core/models/dashboard';
+import { DashboardService } from '../../../core/services/dashboard.service';
 
 /**
  * Displays transactions CRUD operations inside the dashboard.

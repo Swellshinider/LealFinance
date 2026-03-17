@@ -7,7 +7,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { DashboardService, DashboardSummaryResponse, DashboardTransaction } from '../../../core/services/dashboard.service';
+import { DashboardSummaryResponse, DashboardTransaction } from '../../../core/models/dashboard';
+import { DashboardService } from '../../../core/services/dashboard.service';
 
 /**
  * Displays the dashboard summary tab with balance and recent transactions.

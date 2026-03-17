@@ -11,7 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { AuthService, RegisterRequest } from '../../core/services/auth.service';
+import { RegisterRequest } from '../../core/models/auth';
+import { AuthService } from '../../core/services/auth.service';
 
 /**
  * Creates a validator that checks password confirmation fields.

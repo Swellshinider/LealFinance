@@ -9,7 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { finalize } from 'rxjs';
 
-import { AuthService, UpdateProfileRequest, UserProfile } from '../../core/services/auth.service';
+import { UpdateProfileRequest, UserProfile } from '../../core/models/auth';
+import { AuthService } from '../../core/services/auth.service';
 
 /**
  * Profile page allowing authenticated users to update identity and avatar.

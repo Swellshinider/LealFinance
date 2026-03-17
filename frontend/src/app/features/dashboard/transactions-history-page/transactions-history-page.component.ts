@@ -13,7 +13,8 @@ import { MatTableModule } from '@angular/material/table';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { DashboardService, DashboardTransaction } from '../../../core/services/dashboard.service';
+import { DashboardTransaction } from '../../../core/models/dashboard';
+import { DashboardService } from '../../../core/services/dashboard.service';
 
 /**
  * Displays the complete transaction history with filters, pagination, and Excel export.

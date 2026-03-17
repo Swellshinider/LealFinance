@@ -2,98 +2,23 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, catchError, map, of, switchMap, tap, timeout } from 'rxjs';
 
-/**
- * Registration request payload.
- */
-export interface RegisterRequest {
-  /** User full display name. */
-  fullName: string;
-  /** User e-mail address. */
-  email: string;
-  /** User plain password. */
-  password: string;
-}
-
-/**
- * Authenticated user profile payload.
- */
-export interface UserProfile {
-  /** User full display name. */
-  fullName: string;
-  /** User e-mail. */
-  email: string;
-  /** Optional profile photo URL or data URL. */
-  profilePhotoUrl: string | null;
-}
-
-/**
- * Profile update request payload.
- */
-export interface UpdateProfileRequest {
-  /** User full display name. */
-  fullName: string;
-  /** User e-mail. */
-  email: string;
-  /** Optional profile photo URL or data URL. */
-  profilePhotoUrl: string | null;
-}
-
-/**
- * Login request payload.
- */
-export interface LoginRequest {
-  /** User e-mail address. */
-  email: string;
-  /** User plain password. */
-  password: string;
-  /** Indicates whether the session should be remembered. */
-  rememberMe: boolean;
-}
-
-/**
- * Refresh token request payload.
- */
-export interface RefreshTokenRequest {
-  /** Expired JWT token. */
-  token: string;
-  /** Active refresh token. */
-  refreshToken: string;
-}
-
-/**
- * Authentication response payload.
- */
-export interface AuthResponse {
-  /** Signed JWT token. */
-  token: string;
-  /** Token expiration timestamp (UTC). */
-  expiresAtUtc: string;
-  /** Authenticated e-mail. */
-  email: string;
-  /** Authenticated full name. */
-  fullName: string;
-  /** Optional profile photo URL or data URL. */
-  profilePhotoUrl: string | null;
-  /** Issued refresh token when remember-me is enabled. */
-  refreshToken: string | null;
-  /** Refresh token expiration timestamp (UTC). */
-  refreshTokenExpiresAtUtc: string | null;
-}
-
-/**
- * Generic message response payload.
- */
-export interface MessageResponse {
-  /** Message value returned by backend. */
-  message: string;
-}
+import {
+  AuthResponse,
+  LoginRequest,
+  MessageResponse,
+  RefreshTokenRequest,
+  RegisterRequest,
+  UpdateProfileRequest,
+  UserProfile
+} from '../models/auth';
+import { environment } from '../../../environments/environment';
 
 /**
  * Manages user authentication and JWT storage.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly apiBaseUrl = 'http://localhost:5216/api/auth';
+  private readonly apiBaseUrl = `${environment.apiBaseUrl}/api/auth`;
   private readonly accessTokenStorageKey = 'lealfinance.jwt';
   private readonly refreshTokenStorageKey = 'lealfinance.refresh-token';
   private readonly requestTimeoutMs = 15000;

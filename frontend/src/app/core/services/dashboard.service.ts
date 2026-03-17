@@ -2,169 +2,22 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, Subject, timeout } from 'rxjs';
 
-/**
- * Summary transaction card item.
- */
-export interface DashboardTransaction {
-  /** Transaction identifier. */
-  id: number;
-  /** Income or expense type. */
-  type: 'Income' | 'Expense';
-  /** Monetary value. */
-  amount: number;
-  /** Transaction category. */
-  category: string;
-  /** ISO timestamp. */
-  date: string;
-  /** Optional notes. */
-  notes: string | null;
-}
-
-/**
- * Dashboard summary response payload.
- */
-export interface DashboardSummaryResponse {
-  /** Current account balance. */
-  totalCurrentBalance: number;
-  /** Latest transactions list. */
-  recentTransactions: DashboardTransaction[];
-}
-
-/**
- * Upsert payload for transaction create and update operations.
- */
-export interface TransactionUpsertRequest {
-  /** Income or expense type. */
-  type: 'Income' | 'Expense';
-  /** Monetary value. */
-  amount: number;
-  /** Transaction category. */
-  category: string;
-  /** Transaction date as ISO string. */
-  date: string;
-  /** Optional notes. */
-  notes: string | null;
-}
-
-/**
- * Reports pie chart data point.
- */
-export interface ExpenseByCategoryPoint {
-  /** Category label. */
-  category: string;
-  /** Summed expense value. */
-  totalAmount: number;
-}
-
-/**
- * Reports bar chart data point.
- */
-export interface MonthlyIncomeExpensePoint {
-  /** Month label in yyyy-MM format. */
-  month: string;
-  /** Total income for month. */
-  totalIncome: number;
-  /** Total expenses for month. */
-  totalExpense: number;
-}
-
-/**
- * Dashboard reports response payload.
- */
-export interface DashboardReportsResponse {
-  /** Expenses grouped by category. */
-  expensesByCategory: ExpenseByCategoryPoint[];
-  /** Monthly income versus expenses dataset. */
-  monthlyIncomeVsExpense: MonthlyIncomeExpensePoint[];
-}
-
-/**
- * Supported report fixed date ranges.
- */
-export type ReportFixedDateRange = 'day' | 'week' | 'month' | 'sixMonths' | 'year';
-
-/**
- * Supported transaction type filters for reports.
- */
-export type ReportTransactionTypeFilter = 'all' | 'Income' | 'Expense';
-
-/**
- * Supported recurring schedule units.
- */
-export type RecurringFrequencyUnit = 'Day' | 'Week' | 'Month' | 'Year';
-
-/**
- * Recurring transaction schedule item.
- */
-export interface RecurringTransaction {
-  /** Schedule identifier. */
-  id: number;
-  /** Payment label template. */
-  name: string;
-  /** Income or expense type. */
-  type: 'Income' | 'Expense';
-  /** Monetary value. */
-  amount: number;
-  /** Transaction category. */
-  category: string;
-  /** Optional note template. */
-  notes: string | null;
-  /** Schedule start date (ISO). */
-  startDate: string;
-  /** Frequency unit. */
-  frequencyUnit: RecurringFrequencyUnit;
-  /** Frequency interval multiplier. */
-  frequencyInterval: number;
-  /** True for unlimited schedules. */
-  isInfinite: boolean;
-  /** Last payment sequence number for limited schedules. */
-  maxOccurrences: number | null;
-  /** First payment number to generate. */
-  startPaymentNumber: number;
-  /** Number of generated transactions. */
-  generatedOccurrences: number;
-  /** Next generation date (ISO). */
-  nextOccurrenceDate: string | null;
-  /** Active status. */
-  isActive: boolean;
-  /** Remaining payment count for limited schedules. */
-  remainingPayments: number | null;
-}
-
-/**
- * Upsert payload for recurring transaction schedules.
- */
-export interface RecurringTransactionUpsertRequest {
-  /** Payment label template. */
-  name: string;
-  /** Income or expense type. */
-  type: 'Income' | 'Expense';
-  /** Monetary value. */
-  amount: number;
-  /** Transaction category. */
-  category: string;
-  /** Optional note template. */
-  notes: string | null;
-  /** Schedule start date as ISO string. */
-  startDate: string;
-  /** Frequency unit. */
-  frequencyUnit: RecurringFrequencyUnit;
-  /** Frequency interval multiplier. */
-  frequencyInterval: number;
-  /** True for unlimited schedules. */
-  isInfinite: boolean;
-  /** Last payment sequence number for limited schedules. */
-  maxOccurrences: number | null;
-  /** First payment number to generate. */
-  startPaymentNumber: number;
-}
+import {
+  DashboardReportsResponse,
+  DashboardSummaryResponse,
+  DashboardTransaction,
+  RecurringTransaction,
+  RecurringTransactionUpsertRequest,
+  TransactionUpsertRequest
+} from '../models/dashboard';
+import { environment } from '../../../environments/environment';
 
 /**
  * Protected dashboard API client.
  */
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private readonly apiBaseUrl = 'http://localhost:5216/api/dashboard';
+  private readonly apiBaseUrl = `${environment.apiBaseUrl}/api/dashboard`;
   private readonly requestTimeoutMs = 15000;
   private readonly transactionsChangedSubject = new Subject<void>();
   private readonly recurringChangedSubject = new Subject<void>();

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -18,6 +18,9 @@ import { AuthService, UserProfile } from '../../services/auth.service';
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent implements OnInit {
+  private readonly ngZone = inject(NgZone);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+
   /** Cached authenticated profile data. */
   public userProfile: UserProfile | null = null;
 
@@ -34,13 +37,17 @@ export class HeaderComponent implements OnInit {
    */
   public ngOnInit(): void {
     this.authService.userProfile$.subscribe((profile: UserProfile | null) => {
-      this.userProfile = profile;
+      this.runInAngular(() => {
+        this.userProfile = profile;
+      });
     });
 
     if (this.isAuthenticated()) {
       this.authService.getProfile().subscribe({
         error: () => {
-          this.userProfile = null;
+          this.runInAngular(() => {
+            this.userProfile = null;
+          });
         }
       });
     }
@@ -74,5 +81,12 @@ export class HeaderComponent implements OnInit {
   public getProfileAvatarUrl(): string {
     const profilePhotoUrl = this.userProfile?.profilePhotoUrl?.trim();
     return profilePhotoUrl ? profilePhotoUrl : this.defaultAvatarUrl;
+  }
+
+  private runInAngular(action: () => void): void {
+    this.ngZone.run(() => {
+      action();
+      this.changeDetectorRef.detectChanges();
+    });
   }
 }

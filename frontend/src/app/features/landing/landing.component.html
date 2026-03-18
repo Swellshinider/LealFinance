@@ -1,18 +1,35 @@
 <section class="landing-page">
   <div class="hero">
-    <p class="eyebrow">Personal Finance, Simplified</p>
-    <h1>Take control of your money with LealFinance</h1>
-    <p class="hero-copy">
-      Track progress, keep your data secure, and build better financial habits with a clean and responsive experience.
-    </p>
+    <div class="hero-copy-area">
+      <p class="eyebrow">Personal Finance Operating System</p>
+      <h1>Plan, track, and optimize your money in one secure workspace.</h1>
+      <p class="hero-copy">
+        LealFinance centralizes your transactions, recurring schedules, and reports so you can make confident decisions faster.
+      </p>
 
-    <div class="hero-actions">
-      @if (isAuthenticated()) {
-        <a mat-flat-button color="primary" routerLink="/dashboard">Go to Dashboard</a>
-      } @else {
-        <a mat-flat-button color="primary" routerLink="/register">Get Started</a>
-        <a mat-stroked-button routerLink="/login">I already have an account</a>
-      }
+      <div class="hero-actions">
+        @if (isAuthenticated()) {
+          <a mat-flat-button color="primary" routerLink="/dashboard">Open dashboard</a>
+        } @else {
+          <a mat-flat-button color="primary" routerLink="/register">Create account</a>
+          <a mat-stroked-button routerLink="/login">Sign in</a>
+        }
+      </div>
+    </div>
+
+    <div class="hero-metrics" aria-label="Platform highlights">
+      <div class="metric">
+        <strong>Unified</strong>
+        <span>Transactions, recurring items, and analytics in one flow.</span>
+      </div>
+      <div class="metric">
+        <strong>Secure</strong>
+        <span>JWT sessions and hardened authentication by design.</span>
+      </div>
+      <div class="metric">
+        <strong>Actionable</strong>
+        <span>Readable summaries and category-level financial reporting.</span>
+      </div>
     </div>
   </div>
 

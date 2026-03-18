@@ -87,7 +87,7 @@ export class RegisterComponent {
   public get passwordStrengthMessage(): string {
     const password = this.registerForm.controls.password.value;
     if (!password) {
-      return 'Use at least 12 characters with uppercase, lowercase, number and symbol.';
+      return 'Think about a strong master password to protect your account.';
     }
 
     const score = this.getPasswordStrengthScore(password);

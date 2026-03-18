@@ -1,71 +1,88 @@
 <section class="auth-page">
-  <mat-card class="auth-card" appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>Create your account</mat-card-title>
-      <mat-card-subtitle>Start managing your finances with confidence</mat-card-subtitle>
-    </mat-card-header>
+  <div class="auth-shell">
+    <aside class="auth-aside">
+      <p class="eyebrow">Getting Started</p>
+      <h1>Create your secure finance workspace</h1>
+      <p>
+        Set up your account to organize transactions, recurring plans, and reports with a professional, responsive dashboard.
+      </p>
+      <ul>
+        <li>Master password protected account</li>
+        <li>Profile and avatar personalization</li>
+        <li>Immediate access to reporting tools</li>
+        <li>Secure authentication and session management</li>
+        <li>Intuitive transaction and recurring item workflow</li>
+      </ul>
+    </aside>
 
-    <mat-card-content>
-      <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-        <p class="master-password-warning">
-          Warning: Your master password can never be changed. Keep it safe.
-        </p>
+    <mat-card class="auth-card" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Create account</mat-card-title>
+        <mat-card-subtitle>Start managing your finances with confidence</mat-card-subtitle>
+      </mat-card-header>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Full name</mat-label>
-          <input matInput id="fullName" type="text" [maxLength]="fullNameMaxLength" formControlName="fullName" />
-          @if (registerForm.controls.fullName.touched && registerForm.controls.fullName.invalid) {
-            <mat-error>Full name is required.</mat-error>
+      <mat-card-content>
+        <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+          <p class="master-password-warning">
+            Warning: Your master password can never be changed. Keep it safe.
+          </p>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Full name</mat-label>
+            <input matInput id="fullName" type="text" [maxLength]="fullNameMaxLength" formControlName="fullName" />
+            @if (registerForm.controls.fullName.touched && registerForm.controls.fullName.invalid) {
+              <mat-error>Full name is required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput id="email" type="email" [maxLength]="emailMaxLength" formControlName="email" />
+            @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
+              <mat-error>Please enter a valid email.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput id="password" type="password" formControlName="password" />
+            <mat-hint [class.strength-warning]="isPasswordStrengthWarning">{{ passwordStrengthMessage }}</mat-hint>
+            @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
+              <mat-error>Password must be at least 8 characters.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Confirm password</mat-label>
+            <input matInput id="confirmPassword" type="password" formControlName="confirmPassword" />
+            @if (registerForm.touched && registerForm.errors?.['passwordMismatch']) {
+              <mat-error>Passwords must match.</mat-error>
+            }
+          </mat-form-field>
+
+          @if (errorMessage) {
+            <p class="message error">{{ errorMessage }}</p>
           }
-        </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput id="email" type="email" [maxLength]="emailMaxLength" formControlName="email" />
-          @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
-            <mat-error>Please enter a valid email.</mat-error>
+          @if (successMessage) {
+            <p class="message success">{{ successMessage }}</p>
           }
-        </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
-          <input matInput id="password" type="password" formControlName="password" />
-          <mat-hint [class.strength-warning]="isPasswordStrengthWarning">{{ passwordStrengthMessage }}</mat-hint>
-          @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
-            <mat-error>Password must be at least 8 characters.</mat-error>
-          }
-        </mat-form-field>
+          <button mat-flat-button type="submit" color="primary" [disabled]="isSubmitting">
+            @if (isSubmitting) {
+              <mat-spinner [diameter]="18"></mat-spinner>
+              <span>Creating account...</span>
+            } @else {
+              <span>Create account</span>
+            }
+          </button>
+        </form>
+      </mat-card-content>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Confirm password</mat-label>
-          <input matInput id="confirmPassword" type="password" formControlName="confirmPassword" />
-          @if (registerForm.touched && registerForm.errors?.['passwordMismatch']) {
-            <mat-error>Passwords must match.</mat-error>
-          }
-        </mat-form-field>
-
-        @if (errorMessage) {
-          <p class="message error">{{ errorMessage }}</p>
-        }
-
-        @if (successMessage) {
-          <p class="message success">{{ successMessage }}</p>
-        }
-
-        <button mat-flat-button type="submit" color="primary" [disabled]="isSubmitting">
-          @if (isSubmitting) {
-            <mat-spinner [diameter]="18"></mat-spinner>
-            <span>Creating account...</span>
-          } @else {
-            <span>Register</span>
-          }
-        </button>
-      </form>
-    </mat-card-content>
-
-    <mat-card-actions>
-      <p>Already registered?</p>
-      <a mat-button routerLink="/login">Sign in</a>
-    </mat-card-actions>
-  </mat-card>
+      <mat-card-actions>
+        <p>Already registered?</p>
+        <a mat-button routerLink="/login">Sign in</a>
+      </mat-card-actions>
+    </mat-card>
+  </div>
 </section>

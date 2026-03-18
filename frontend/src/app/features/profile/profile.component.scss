@@ -1,11 +1,11 @@
 .profile-page {
-  display: flex;
-  justify-content: center;
-  padding: 1rem;
+  display: grid;
+  gap: 0.95rem;
 }
 
 .profile-card {
   width: min(100%, 640px);
+  border-radius: 18px;
 }
 
 .loading-state {
@@ -13,6 +13,31 @@
   align-items: center;
   gap: 0.75rem;
   min-height: 140px;
+}
+
+.profile-intro {
+  width: min(100%, 640px);
+  display: grid;
+  gap: 0.28rem;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--lf-text-subtle);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.45rem, 2.1vw, 2rem);
+}
+
+.profile-intro p {
+  margin: 0;
+  color: var(--lf-text-muted);
 }
 
 .profile-form {
@@ -25,14 +50,18 @@
 .photo-section {
   display: flex;
   gap: 1rem;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
+  padding: 0.85rem;
+  border: 1px dashed var(--lf-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--lf-surface-raised) 86%, transparent);
 }
 
 .photo-preview,
 .photo-placeholder {
-  width: 84px;
-  height: 84px;
+  width: 92px;
+  height: 92px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -41,9 +70,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed #cbd5e1;
-  color: #64748b;
+  border: 1px dashed var(--lf-border);
+  color: var(--lf-text-subtle);
   font-size: 0.8rem;
+  background: color-mix(in srgb, var(--lf-surface) 75%, transparent);
 }
 
 .photo-actions {
@@ -53,13 +83,41 @@
 }
 
 .upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0.45rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--lf-border);
+  background: color-mix(in srgb, var(--lf-surface) 90%, transparent);
   cursor: pointer;
-  color: #2563eb;
+  color: var(--lf-primary-strong);
+  width: fit-content;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
   font-weight: 600;
 }
 
-input[type='file'] {
-  max-width: 240px;
+.upload-label:hover {
+  border-color: color-mix(in srgb, var(--lf-primary) 44%, var(--lf-border));
+  background: color-mix(in srgb, var(--lf-primary) 10%, var(--lf-surface));
+}
+
+.upload-file-name {
+  font-size: 0.84rem;
+  color: var(--lf-text-subtle);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-photo-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 mat-form-field,
@@ -72,6 +130,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
+  min-height: 44px;
 }
 
 .message {
@@ -84,4 +143,16 @@ button {
 
 .success {
   color: var(--lf-success);
+}
+
+@media (max-width: 768px) {
+  .photo-section {
+    padding: 0.75rem;
+  }
+
+  .photo-preview,
+  .photo-placeholder {
+    width: 82px;
+    height: 82px;
+  }
 }

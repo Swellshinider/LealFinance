@@ -1,18 +1,64 @@
 .auth-page {
-  display: flex;
-  justify-content: center;
-  padding: 1rem;
+  padding: 0.5rem 0;
+}
+
+.auth-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.auth-aside {
+  border-radius: 18px;
+  border: 1px solid var(--lf-border);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--lf-primary) 88%, #0b1430) 0%, color-mix(in srgb, var(--lf-accent) 72%, #102a2f) 100%),
+    radial-gradient(circle at 84% 18%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 36%);
+  color: #ffffff;
+  padding: clamp(1rem, 2.4vw, 1.6rem);
+}
+
+.eyebrow {
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  line-height: 1.14;
+}
+
+.auth-aside p {
+  margin: 0.7rem 0 0;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.auth-aside ul {
+  margin: 0.95rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.auth-aside li {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .auth-card {
-  width: min(100%, 460px);
+  width: 100%;
+  border-radius: 18px;
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  margin-top: 1rem;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
 }
 
 mat-form-field,
@@ -25,6 +71,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  min-height: 44px;
 }
 
 .message {
@@ -40,4 +87,16 @@ mat-card-actions {
   align-items: center;
   justify-content: flex-end;
   gap: 0.35rem;
+}
+
+@media (max-width: 960px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-page {
+    padding: 0;
+  }
 }

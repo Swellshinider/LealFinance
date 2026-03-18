@@ -51,6 +51,9 @@ export class ProfileComponent implements OnInit {
   /** Success message shown after successful update. */
   public successMessage = '';
 
+  /** Selected image file name shown near the upload button. */
+  public selectedPhotoFileName = 'No file selected';
+
   /** Indicates profile loading in progress. */
   public isLoading = true;
 
@@ -129,15 +132,19 @@ export class ProfileComponent implements OnInit {
 
     if (!file.type.startsWith('image/')) {
       this.photoValidationMessage = 'Please select a valid image file.';
+      this.selectedPhotoFileName = 'No file selected';
       input.value = '';
       return;
     }
 
     if (file.size > this.maxPhotoBytes) {
       this.photoValidationMessage = 'Profile photo is too large. Please choose an image up to 5 MB.';
+      this.selectedPhotoFileName = 'No file selected';
       input.value = '';
       return;
     }
+
+    this.selectedPhotoFileName = file.name;
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -158,6 +165,7 @@ export class ProfileComponent implements OnInit {
     this.profilePhotoPreview = null;
     this.photoValidationMessage = '';
     this.successMessage = '';
+    this.selectedPhotoFileName = 'No file selected';
 
     if (this.profilePhotoInput?.nativeElement) {
       this.profilePhotoInput.nativeElement.value = '';

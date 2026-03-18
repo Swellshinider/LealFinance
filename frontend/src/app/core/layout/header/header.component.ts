@@ -3,10 +3,12 @@ import { ChangeDetectorRef, Component, NgZone, OnInit, inject } from '@angular/c
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { UserProfile } from '../../models/auth';
 import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 
 /**
  * Application header with authentication-aware navigation actions.
@@ -14,19 +16,23 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatMenuModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatMenuModule, MatTooltipModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent implements OnInit {
   private readonly ngZone = inject(NgZone);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly themeService = inject(ThemeService);
 
   /** Cached authenticated profile data. */
   public userProfile: UserProfile | null = null;
 
   /** Fallback avatar image used when profile photo is missing. */
   public readonly defaultAvatarUrl = '/default-avatar.svg';
+
+  /** Current active UI theme mode signal. */
+  public readonly themeMode = this.themeService.mode;
 
   public constructor(
     private readonly authService: AuthService,
@@ -74,6 +80,13 @@ export class HeaderComponent implements OnInit {
    */
   public goToProfile(): void {
     void this.router.navigate(['/profile']);
+  }
+
+  /**
+   * Toggles between light and dark theme mode.
+   */
+  public toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
   /**

@@ -1,11 +1,50 @@
 .layout-shell {
+  position: relative;
   min-height: 100dvh;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  overflow: hidden;
 }
 
 .layout-content {
-  width: min(1120px, 100%);
+  position: relative;
+  z-index: 1;
+  width: min(1200px, 100%);
   margin: 0 auto;
-  padding: 1.25rem 1rem;
+  padding: 1.45rem 1rem 1.8rem;
+}
+
+.ambient-shape {
+  position: absolute;
+  pointer-events: none;
+  filter: blur(42px);
+  opacity: 0.4;
+}
+
+.ambient-shape-a {
+  width: 320px;
+  height: 320px;
+  top: 86px;
+  left: -120px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--lf-primary) 34%, transparent);
+}
+
+.ambient-shape-b {
+  width: 340px;
+  height: 340px;
+  top: 420px;
+  right: -130px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--lf-accent) 28%, transparent);
+}
+
+@media (max-width: 768px) {
+  .layout-content {
+    padding: 1rem 0.75rem 1.4rem;
+  }
+
+  .ambient-shape {
+    opacity: 0.24;
+  }
 }

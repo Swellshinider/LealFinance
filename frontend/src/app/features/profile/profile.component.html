@@ -1,10 +1,11 @@
 <section class="profile-page">
-  <mat-card class="profile-card" appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>My profile</mat-card-title>
-      <mat-card-subtitle>Update your name, email and profile photo</mat-card-subtitle>
-    </mat-card-header>
+  <header class="profile-intro">
+    <p class="eyebrow">Account Settings</p>
+    <h1>My profile</h1>
+    <p>Update your display name, email, and profile image.</p>
+  </header>
 
+  <mat-card class="profile-card" appearance="outlined">
     <mat-card-content>
       @if (isLoading) {
         <div class="loading-state">
@@ -21,8 +22,15 @@
             }
 
             <div class="photo-actions">
-              <label class="upload-label" for="profilePhotoInput">Choose photo</label>
-              <input #profilePhotoInput id="profilePhotoInput" type="file" accept="image/*" (change)="onPhotoSelected($event)" />
+              <label class="upload-label" for="profilePhotoInput">Browse photo</label>
+              <span class="upload-file-name">{{ selectedPhotoFileName }}</span>
+              <input
+                #profilePhotoInput
+                class="profile-photo-input"
+                id="profilePhotoInput"
+                type="file"
+                accept="image/*"
+                (change)="onPhotoSelected($event)" />
               <button mat-stroked-button type="button" (click)="clearPhoto()">Remove photo</button>
             </div>
           </div>

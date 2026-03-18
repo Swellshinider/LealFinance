@@ -1,48 +1,63 @@
 <section class="auth-page">
-  <mat-card class="auth-card" appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>Welcome back</mat-card-title>
-      <mat-card-subtitle>Sign in to your LealFinance account</mat-card-subtitle>
-    </mat-card-header>
+  <div class="auth-shell">
+    <aside class="auth-aside">
+      <p class="eyebrow">Account Access</p>
+      <h1>Welcome back to LealFinance</h1>
+      <p>
+        Sign in to continue monitoring your financial summary, transactions, and recurring planning workflow.
+      </p>
+      <ul>
+        <li>Protected sessions with JWT</li>
+        <li>Fast dashboard overview</li>
+        <li>Secure profile management</li>
+      </ul>
+    </aside>
 
-    <mat-card-content>
-      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput id="email" type="email" [maxLength]="emailMaxLength" formControlName="email" />
-          @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
-            <mat-error>Please enter a valid email.</mat-error>
+    <mat-card class="auth-card" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Sign in</mat-card-title>
+        <mat-card-subtitle>Use your account credentials to continue</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput id="email" type="email" [maxLength]="emailMaxLength" formControlName="email" />
+            @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
+              <mat-error>Please enter a valid email.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput id="password" type="password" formControlName="password" />
+            @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+              <mat-error>Password must be at least 8 characters.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-checkbox formControlName="rememberMe">Remember me</mat-checkbox>
+
+          @if (errorMessage) {
+            <p class="message error">{{ errorMessage }}</p>
           }
-        </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
-          <input matInput id="password" type="password" formControlName="password" />
-          @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
-            <mat-error>Password must be at least 8 characters.</mat-error>
-          }
-        </mat-form-field>
+          <button mat-flat-button type="submit" color="primary" [disabled]="isSubmitting">
+            @if (isSubmitting) {
+              <mat-spinner [diameter]="18"></mat-spinner>
+              <span>Signing in...</span>
+            } @else {
+              <span>Continue</span>
+            }
+          </button>
+        </form>
+      </mat-card-content>
 
-        <mat-checkbox formControlName="rememberMe">Remember me</mat-checkbox>
-
-        @if (errorMessage) {
-          <p class="message error">{{ errorMessage }}</p>
-        }
-
-        <button mat-flat-button type="submit" color="primary" [disabled]="isSubmitting">
-          @if (isSubmitting) {
-            <mat-spinner [diameter]="18"></mat-spinner>
-            <span>Signing in...</span>
-          } @else {
-            <span>Login</span>
-          }
-        </button>
-      </form>
-    </mat-card-content>
-
-    <mat-card-actions>
-      <p>No account?</p>
-      <a mat-button routerLink="/register">Register here</a>
-    </mat-card-actions>
-  </mat-card>
+      <mat-card-actions>
+        <p>No account?</p>
+        <a mat-button routerLink="/register">Register here</a>
+      </mat-card-actions>
+    </mat-card>
+  </div>
 </section>

@@ -2,9 +2,19 @@
 
 @include mat.core();
 
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
 $lealfinance-primary: mat.m2-define-palette(mat.$m2-indigo-palette, 700, 500, 900);
 $lealfinance-accent: mat.m2-define-palette(mat.$m2-cyan-palette, 700, 500, 900);
 $lealfinance-warn: mat.m2-define-palette(mat.$m2-red-palette);
+
+$lealfinance-dark-primary: mat.m2-define-palette(mat.$m2-blue-grey-palette, 200, 100, 400);
+$lealfinance-dark-accent: mat.m2-define-palette(mat.$m2-cyan-palette, 300, 200, 500);
+
+$lealfinance-typography: mat.m2-define-typography-config(
+  $font-family: 'Source Sans 3, Segoe UI, sans-serif',
+  $headline-6: mat.m2-define-typography-level(1.2rem, 1.6rem, 700)
+);
 
 $lealfinance-theme: mat.m2-define-light-theme((
 	color: (
@@ -12,21 +22,41 @@ $lealfinance-theme: mat.m2-define-light-theme((
 		accent: $lealfinance-accent,
 		warn: $lealfinance-warn
 	),
-	typography: mat.m2-define-typography-config(),
+	typography: $lealfinance-typography,
+	density: 0
+));
+
+$lealfinance-theme-dark: mat.m2-define-dark-theme((
+	color: (
+		primary: $lealfinance-dark-primary,
+		accent: $lealfinance-dark-accent,
+		warn: $lealfinance-warn
+	),
+	typography: $lealfinance-typography,
 	density: 0
 ));
 
 @include mat.all-component-themes($lealfinance-theme);
 
+body.theme-dark {
+  @include mat.all-component-colors($lealfinance-theme-dark);
+}
+
 :root {
-	--lf-primary: #303f9f;
-	--lf-primary-strong: #1a237e;
-	--lf-accent: #00838f;
+	--lf-primary: #1847d6;
+	--lf-primary-strong: #102f93;
+	--lf-accent: #0b7285;
 	--lf-success: #0f766e;
 	--lf-danger: #b91c1c;
 	--lf-surface: #ffffff;
-	--lf-surface-alt: #f5f7fb;
-	--lf-text-primary: #0f172a;
+	--lf-surface-raised: #f8fafc;
+	--lf-surface-alt: #eef2f7;
+	--lf-border: rgba(15, 23, 42, 0.12);
+	--lf-text-primary: #0b1220;
+	--lf-text-muted: #3b475d;
+	--lf-text-subtle: #637189;
+	--lf-shadow-soft: rgba(15, 23, 42, 0.12);
+	--lf-shadow-strong: rgba(15, 23, 42, 0.2);
 }
 
 html,
@@ -36,9 +66,71 @@ body {
 }
 
 body {
-	font-family: Inter, 'Segoe UI', Roboto, Arial, sans-serif;
+	font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
 	color: var(--lf-text-primary);
-	background: linear-gradient(180deg, #edf2ff 0%, var(--lf-surface-alt) 60%, #ffffff 100%);
+	background:
+    radial-gradient(circle at 14% 12%, rgba(24, 71, 214, 0.13) 0%, rgba(24, 71, 214, 0) 34%),
+    radial-gradient(circle at 82% 72%, rgba(11, 114, 133, 0.12) 0%, rgba(11, 114, 133, 0) 36%),
+    linear-gradient(180deg, #f4f8ff 0%, var(--lf-surface-alt) 58%, #ffffff 100%);
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+body.theme-dark {
+  --lf-primary: #d9e2ff;
+  --lf-primary-strong: #9fb8ff;
+  --lf-accent: #5fe2f9;
+  --lf-success: #7ce8d2;
+  --lf-danger: #ff8c8c;
+  --lf-surface: #111111;
+  --lf-surface-raised: #171717;
+  --lf-surface-alt: #0b0b0b;
+  --lf-border: rgba(255, 255, 255, 0.14);
+  --lf-text-primary: #f2f5fa;
+  --lf-text-muted: #d4dae4;
+  --lf-text-subtle: #9ea7b5;
+  --lf-shadow-soft: rgba(0, 0, 0, 0.34);
+  --lf-shadow-strong: rgba(0, 0, 0, 0.52);
+  background:
+    radial-gradient(circle at 12% 10%, rgba(159, 184, 255, 0.18) 0%, rgba(159, 184, 255, 0) 36%),
+    radial-gradient(circle at 80% 70%, rgba(184, 241, 251, 0.15) 0%, rgba(184, 241, 251, 0) 34%),
+    linear-gradient(180deg, #0f0f0f 0%, #080808 68%, #050505 100%);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.mat-mdc-card-title {
+  font-family: Manrope, 'Segoe UI', sans-serif;
+  letter-spacing: -0.015em;
+}
+
+a {
+  color: inherit;
+}
+
+.mat-mdc-card,
+.mat-mdc-tab-group,
+.mat-mdc-table,
+.mat-mdc-menu-panel,
+.mat-mdc-dialog-surface {
+  border-radius: 16px;
+  border: 1px solid var(--lf-border);
+  box-shadow: 0 14px 30px var(--lf-shadow-soft);
+}
+
+.mat-mdc-card {
+  background: color-mix(in srgb, var(--lf-surface) 96%, transparent);
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-unelevated-button.mat-primary {
+  border-radius: 12px;
 }
 
 * {

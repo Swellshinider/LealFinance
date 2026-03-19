@@ -6,7 +6,6 @@
   color: var(--lf-text-muted);
   border-top: 1px solid var(--lf-border);
   background: color-mix(in srgb, var(--lf-surface) 90%, transparent);
-  backdrop-filter: blur(8px);
 }
 
 p {

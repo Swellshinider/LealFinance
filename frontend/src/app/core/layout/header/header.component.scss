@@ -7,8 +7,7 @@
   padding: 0;
   background: color-mix(in srgb, var(--lf-surface) 80%, transparent);
   border-bottom: 1px solid var(--lf-border);
-  box-shadow: 0 12px 28px var(--lf-shadow-soft);
-  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 16px var(--lf-shadow-soft);
 }
 
 .brand {

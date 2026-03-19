@@ -14,6 +14,10 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("LocalAngular", policy =>
@@ -118,6 +122,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseResponseCompression();
 app.UseCors("LocalAngular");
 app.UseHttpsRedirection();
 app.UseRateLimiter();

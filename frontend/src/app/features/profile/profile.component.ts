@@ -9,7 +9,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { finalize } from 'rxjs';
 
-import { UpdateProfileRequest, UserProfile } from '../../core/models/auth';
+import {
+  EnableTwoFactorRequest,
+  RecoverPasswordRequest,
+  TwoFactorSetupResponse,
+  UpdateProfileRequest,
+  UserProfile
+} from '../../core/models/auth';
 import { AuthService } from '../../core/services/auth.service';
 
 /**
@@ -60,6 +66,39 @@ export class ProfileComponent implements OnInit {
   /** Indicates profile save in progress. */
   public isSaving = false;
 
+  /** Indicates two-factor setup submission in progress. */
+  public isEnablingTwoFactor = false;
+
+  /** Indicates password recovery request in progress. */
+  public isRecoveringPassword = false;
+
+  /** Current OTPAUTH URI used for authenticator setup. */
+  public otpAuthUri = '';
+
+  /** Generated QR image source for authenticator setup. */
+  public otpQrCodeDataUrl = '';
+
+  /** Current setup view mode inside the modal. */
+  public twoFactorSetupMode: 'qr' | 'link' = 'qr';
+
+  /** Controls visibility of the mandatory 2FA modal. */
+  public showTwoFactorSetupModal = false;
+
+  /** Current manual shared key used for authenticator setup. */
+  public twoFactorManualKey = '';
+
+  /** Error message for two-factor setup section. */
+  public twoFactorErrorMessage = '';
+
+  /** Success message for two-factor setup section. */
+  public twoFactorSuccessMessage = '';
+
+  /** Error message for password recovery section. */
+  public passwordRecoveryErrorMessage = '';
+
+  /** Success message for password recovery section. */
+  public passwordRecoverySuccessMessage = '';
+
   /** Maximum allowed full name length. */
   public readonly fullNameMaxLength = 120;
 
@@ -73,9 +112,27 @@ export class ProfileComponent implements OnInit {
     profilePhotoUrl: ['']
   });
 
+  /** Reactive form for enabling two-factor authentication. */
+  public readonly enableTwoFactorForm = this.formBuilder.nonNullable.group({
+    verificationCode: ['', [Validators.required, Validators.pattern('^[0-9]{6}$')]]
+  });
+
+  /** Reactive form for recovering password with two-factor code. */
+  public readonly recoverPasswordForm = this.formBuilder.nonNullable.group({
+    newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]],
+    verificationCode: ['', [Validators.required, Validators.pattern('^[0-9]{6}$')]]
+  });
+
   public constructor(
     private readonly authService: AuthService
   ) {}
+
+  /**
+   * Returns whether two-factor is currently enabled.
+   */
+  public get isTwoFactorEnabled(): boolean {
+    return this.authService.getCurrentUserProfile()?.isTwoFactorEnabled ?? false;
+  }
 
   /**
    * Returns whether save should be disabled.
@@ -106,11 +163,148 @@ export class ProfileComponent implements OnInit {
               profilePhotoUrl: profile.profilePhotoUrl ?? ''
             });
             this.profilePhotoPreview = profile.profilePhotoUrl;
+
+            if (!profile.isTwoFactorEnabled) {
+              this.showTwoFactorSetupModal = true;
+              this.loadTwoFactorSetup();
+            }
+            else
+            {
+              this.showTwoFactorSetupModal = false;
+            }
           });
         },
         error: () => {
           this.runInAngular(() => {
             this.errorMessage = 'Unable to load your profile right now.';
+          });
+        }
+      });
+  }
+
+  /**
+   * Loads the authenticator setup data for the current user.
+   */
+  public loadTwoFactorSetup(): void {
+    this.twoFactorErrorMessage = '';
+    this.twoFactorSuccessMessage = '';
+    this.twoFactorSetupMode = 'qr';
+    this.otpQrCodeDataUrl = '';
+
+    this.authService.getTwoFactorSetup().subscribe({
+      next: (setup: TwoFactorSetupResponse) => {
+        this.runInAngular(() => {
+          this.twoFactorManualKey = setup.manualEntryKey;
+          this.otpAuthUri = setup.otpAuthUri;
+          this.otpQrCodeDataUrl = this.buildQrCodeImageUrl(setup.otpAuthUri);
+          this.showTwoFactorSetupModal = !this.isTwoFactorEnabled;
+        });
+      },
+      error: () => {
+        this.runInAngular(() => {
+          this.twoFactorErrorMessage = 'Unable to load authenticator setup details right now.';
+          this.showTwoFactorSetupModal = !this.isTwoFactorEnabled;
+        });
+      }
+    });
+  }
+
+  /**
+   * Switches between QR and direct-link setup options.
+   */
+  public setTwoFactorSetupMode(mode: 'qr' | 'link'): void {
+    this.twoFactorSetupMode = mode;
+  }
+
+  /**
+   * Enables two-factor authentication using the provided authenticator code.
+   */
+  public enableTwoFactor(): void {
+    this.twoFactorErrorMessage = '';
+    this.twoFactorSuccessMessage = '';
+
+    if (this.enableTwoFactorForm.invalid) {
+      this.enableTwoFactorForm.markAllAsTouched();
+      return;
+    }
+
+    this.isEnablingTwoFactor = true;
+
+    const payload: EnableTwoFactorRequest = {
+      verificationCode: this.enableTwoFactorForm.controls.verificationCode.value.trim()
+    };
+
+    this.authService
+      .enableTwoFactor(payload)
+      .pipe(
+        finalize(() => {
+          this.runInAngular(() => {
+            this.isEnablingTwoFactor = false;
+          });
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.runInAngular(() => {
+            this.twoFactorSuccessMessage = 'Two-factor authentication is now enabled.';
+            this.enableTwoFactorForm.reset({ verificationCode: '' });
+            this.showTwoFactorSetupModal = false;
+          });
+        },
+        error: () => {
+          this.runInAngular(() => {
+            this.twoFactorErrorMessage = 'Invalid verification code. Please try again with a fresh code.';
+          });
+        }
+      });
+  }
+
+  /**
+   * Recovers the login password using a valid 2FA code.
+   */
+  public recoverPassword(): void {
+    this.passwordRecoveryErrorMessage = '';
+    this.passwordRecoverySuccessMessage = '';
+
+    if (this.recoverPasswordForm.invalid) {
+      this.recoverPasswordForm.markAllAsTouched();
+      return;
+    }
+
+    this.isRecoveringPassword = true;
+
+    const payload: RecoverPasswordRequest = {
+      newPassword: this.recoverPasswordForm.controls.newPassword.value,
+      verificationCode: this.recoverPasswordForm.controls.verificationCode.value.trim()
+    };
+
+    this.authService
+      .recoverPassword(payload)
+      .pipe(
+        finalize(() => {
+          this.runInAngular(() => {
+            this.isRecoveringPassword = false;
+          });
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.runInAngular(() => {
+            this.passwordRecoverySuccessMessage = 'Password recovered successfully.';
+            this.recoverPasswordForm.reset({
+              newPassword: '',
+              verificationCode: ''
+            });
+          });
+        },
+        error: (error: HttpErrorResponse) => {
+          this.runInAngular(() => {
+            if (error.status === 400) {
+              this.passwordRecoveryErrorMessage = 'Invalid code or password rules were not satisfied.';
+              return;
+            }
+
+            this.passwordRecoveryErrorMessage = 'Could not recover password. Please try again.';
           });
         }
       });
@@ -237,5 +431,13 @@ export class ProfileComponent implements OnInit {
       action();
       this.changeDetectorRef.detectChanges();
     });
+  }
+
+  private buildQrCodeImageUrl(otpAuthUri: string): string {
+    if (!otpAuthUri) {
+      return '';
+    }
+
+    return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(otpAuthUri)}`;
   }
 }

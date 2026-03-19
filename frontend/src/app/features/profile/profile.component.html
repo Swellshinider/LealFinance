@@ -75,4 +75,146 @@
       }
     </mat-card-content>
   </mat-card>
+
+  <mat-card class="profile-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Authenticator app (2FA)</mat-card-title>
+      <mat-card-subtitle>
+        @if (isTwoFactorEnabled) {
+          Enabled and protecting your account.
+        } @else {
+          Mandatory setup before accessing protected finance endpoints.
+        }
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (isTwoFactorEnabled) {
+        <p class="message success">Two-factor authentication is enabled.</p>
+      } @else {
+        <p>Authenticator setup is required. Complete the popup setup flow to continue.</p>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="profile-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Recover password</mat-card-title>
+      <mat-card-subtitle>Requires a valid authenticator code.</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form class="profile-form" [formGroup]="recoverPasswordForm" (ngSubmit)="recoverPassword()">
+        <mat-form-field appearance="outline">
+          <mat-label>New password</mat-label>
+          <input matInput type="password" formControlName="newPassword" />
+          @if (recoverPasswordForm.controls.newPassword.touched && recoverPasswordForm.controls.newPassword.invalid) {
+            <mat-error>Password must contain at least 8 characters.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Authenticator code</mat-label>
+          <input matInput formControlName="verificationCode" maxlength="6" inputmode="numeric" />
+          @if (recoverPasswordForm.controls.verificationCode.touched && recoverPasswordForm.controls.verificationCode.invalid) {
+            <mat-error>Enter a valid 6-digit code.</mat-error>
+          }
+        </mat-form-field>
+
+        @if (passwordRecoveryErrorMessage) {
+          <p class="message error">{{ passwordRecoveryErrorMessage }}</p>
+        }
+
+        @if (passwordRecoverySuccessMessage) {
+          <p class="message success">{{ passwordRecoverySuccessMessage }}</p>
+        }
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="isRecoveringPassword || !isTwoFactorEnabled">
+          @if (isRecoveringPassword) {
+            <mat-spinner [diameter]="18"></mat-spinner>
+            <span>Recovering...</span>
+          } @else {
+            <span>Recover password</span>
+          }
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  @if (showTwoFactorSetupModal && !isTwoFactorEnabled) {
+    <div class="two-factor-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="twoFactorSetupTitle">
+      <section class="two-factor-modal">
+        <header class="two-factor-modal-header">
+          <h2 id="twoFactorSetupTitle">Complete Authenticator Setup</h2>
+          <p>Choose your preferred setup option, then enter the 6-digit code from your app to unlock access.</p>
+        </header>
+
+        <div class="two-factor-mode-toggle" role="tablist" aria-label="Setup option">
+          <button
+            type="button"
+            mat-stroked-button
+            [class.active]="twoFactorSetupMode === 'qr'"
+            (click)="setTwoFactorSetupMode('qr')">
+            QR code
+          </button>
+          <button
+            type="button"
+            mat-stroked-button
+            [class.active]="twoFactorSetupMode === 'link'"
+            (click)="setTwoFactorSetupMode('link')">
+            Setup link
+          </button>
+        </div>
+
+        @if (twoFactorSetupMode === 'qr') {
+          <div class="two-factor-setup-panel">
+            @if (otpQrCodeDataUrl) {
+              <img class="two-factor-qr-image" [src]="otpQrCodeDataUrl" alt="Authenticator setup QR code" />
+            } @else {
+              <p class="message">Generating QR code...</p>
+            }
+            <p class="manual-key"><strong>Manual key:</strong> {{ twoFactorManualKey || 'Loading...' }}</p>
+          </div>
+        } @else {
+          <div class="two-factor-setup-panel">
+            <p>Open this link in your authenticator app-compatible device:</p>
+            @if (otpAuthUri) {
+              <a [href]="otpAuthUri" target="_blank" rel="noopener noreferrer">Open authenticator setup link</a>
+            }
+            <p class="manual-key"><strong>Manual key:</strong> {{ twoFactorManualKey || 'Loading...' }}</p>
+          </div>
+        }
+
+        <form class="profile-form" [formGroup]="enableTwoFactorForm" (ngSubmit)="enableTwoFactor()">
+          <mat-form-field appearance="outline">
+            <mat-label>Authenticator code</mat-label>
+            <input matInput formControlName="verificationCode" maxlength="6" inputmode="numeric" />
+            @if (enableTwoFactorForm.controls.verificationCode.touched && enableTwoFactorForm.controls.verificationCode.invalid) {
+              <mat-error>Enter the 6-digit code from your authenticator app.</mat-error>
+            }
+          </mat-form-field>
+
+          @if (twoFactorErrorMessage) {
+            <p class="message error">{{ twoFactorErrorMessage }}</p>
+          }
+
+          @if (twoFactorSuccessMessage) {
+            <p class="message success">{{ twoFactorSuccessMessage }}</p>
+          }
+
+          <div class="two-factor-modal-actions">
+            <button mat-button type="button" (click)="loadTwoFactorSetup()">Refresh setup data</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="isEnablingTwoFactor">
+              @if (isEnablingTwoFactor) {
+                <mat-spinner [diameter]="18"></mat-spinner>
+                <span>Verifying...</span>
+              } @else {
+                <span>Verify and continue</span>
+              }
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
 </section>

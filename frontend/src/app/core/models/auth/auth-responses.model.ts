@@ -10,6 +10,8 @@ export interface AuthResponse {
   email: string;
   /** Authenticated full name. */
   fullName: string;
+  /** True when the user must complete authenticator setup. */
+  requiresTwoFactorSetup: boolean;
   /** Optional profile photo URL or data URL. */
   profilePhotoUrl: string | null;
   /** Issued refresh token when remember-me is enabled. */
@@ -24,4 +26,16 @@ export interface AuthResponse {
 export interface MessageResponse {
   /** Message value returned by backend. */
   message: string;
+}
+
+/**
+ * Authenticator setup response payload.
+ */
+export interface TwoFactorSetupResponse {
+  /** Current two-factor enabled state. */
+  isTwoFactorEnabled: boolean;
+  /** Manual shared secret key for authenticator app. */
+  manualEntryKey: string;
+  /** OTPAUTH URI for QR setup. */
+  otpAuthUri: string;
 }

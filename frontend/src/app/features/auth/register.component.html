@@ -23,10 +23,6 @@
 
       <mat-card-content>
         <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-          <p class="master-password-warning">
-            Warning: Your master password can never be changed. Keep it safe.
-          </p>
-
           <mat-form-field appearance="outline">
             <mat-label>Full name</mat-label>
             <input matInput id="fullName" type="text" [maxLength]="fullNameMaxLength" formControlName="fullName" />

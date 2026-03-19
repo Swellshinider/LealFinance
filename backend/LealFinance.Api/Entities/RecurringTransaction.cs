@@ -50,6 +50,12 @@ public sealed class RecurringTransaction
     public string? Notes { get; set; }
 
     /// <summary>
+    /// Gets or sets encrypted recurring payload at rest.
+    /// </summary>
+    [MaxLength(10000)]
+    public string? EncryptedPayload { get; set; }
+
+    /// <summary>
     /// Gets or sets the UTC start date for schedule generation.
     /// </summary>
     public DateTime StartDateUtc { get; set; }

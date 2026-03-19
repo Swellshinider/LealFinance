@@ -90,6 +90,12 @@ export class SummaryTabComponent implements OnInit {
               return;
             }
 
+            if (error instanceof HttpErrorResponse && error.status === 403) {
+              this.message = 'Complete authenticator setup in your profile before using dashboard data.';
+              void this.router.navigate(['/profile']);
+              return;
+            }
+
             this.message = 'Unable to load dashboard summary.';
           });
         }

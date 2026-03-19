@@ -19,4 +19,9 @@ public sealed class ProfileResponse
     /// Gets or sets the optional profile photo URL or data URL.
     /// </summary>
     public string? ProfilePhotoUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether authenticator-based two-factor authentication is enabled.
+    /// </summary>
+    public bool IsTwoFactorEnabled { get; set; }
 }

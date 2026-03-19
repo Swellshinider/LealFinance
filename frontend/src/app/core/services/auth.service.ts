@@ -4,10 +4,13 @@ import { BehaviorSubject, Observable, catchError, map, of, switchMap, tap, timeo
 
 import {
   AuthResponse,
+  EnableTwoFactorRequest,
   LoginRequest,
   MessageResponse,
+  RecoverPasswordRequest,
   RefreshTokenRequest,
   RegisterRequest,
+  TwoFactorSetupResponse,
   UpdateProfileRequest,
   UserProfile
 } from '../models/auth';
@@ -77,6 +80,46 @@ export class AuthService {
   }
 
   /**
+   * Gets authenticator setup information for the current user.
+   */
+  public getTwoFactorSetup(): Observable<TwoFactorSetupResponse> {
+    return this.httpClient
+      .get<TwoFactorSetupResponse>(`${this.apiBaseUrl}/2fa/setup`)
+      .pipe(timeout(this.requestTimeoutMs));
+  }
+
+  /**
+   * Enables authenticator-based two-factor authentication.
+   */
+  public enableTwoFactor(request: EnableTwoFactorRequest): Observable<MessageResponse> {
+    return this.httpClient
+      .post<MessageResponse>(`${this.apiBaseUrl}/2fa/enable`, request)
+      .pipe(timeout(this.requestTimeoutMs))
+      .pipe(
+        tap(() => {
+          const profile = this.userProfileSubject.value;
+          if (!profile) {
+            return;
+          }
+
+          this.setUserProfile({
+            ...profile,
+            isTwoFactorEnabled: true
+          });
+        })
+      );
+  }
+
+  /**
+   * Recovers the login password for the authenticated user.
+   */
+  public recoverPassword(request: RecoverPasswordRequest): Observable<MessageResponse> {
+    return this.httpClient
+      .post<MessageResponse>(`${this.apiBaseUrl}/profile/recover-password`, request)
+      .pipe(timeout(this.requestTimeoutMs));
+  }
+
+  /**
    * Updates the authenticated user's profile.
    */
   public updateProfile(request: UpdateProfileRequest): Observable<UserProfile> {
@@ -140,7 +183,8 @@ export class AuthService {
     this.setUserProfile({
       fullName: response.fullName,
       email: response.email,
-      profilePhotoUrl: response.profilePhotoUrl ?? currentProfile?.profilePhotoUrl ?? null
+      profilePhotoUrl: response.profilePhotoUrl ?? currentProfile?.profilePhotoUrl ?? null,
+      isTwoFactorEnabled: !response.requiresTwoFactorSetup
     });
 
     if (response.refreshToken) {

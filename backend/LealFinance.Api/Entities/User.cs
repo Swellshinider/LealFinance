@@ -33,6 +33,12 @@ public sealed class User
     public string PasswordHash { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the immutable Argon2id hash of the user master password used to protect data records.
+    /// </summary>
+    [Required]
+    public string MasterPasswordHash { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the UTC timestamp of creation.
     /// </summary>
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
@@ -47,6 +53,29 @@ public sealed class User
     /// Gets or sets the UTC expiration timestamp for the current refresh token.
     /// </summary>
     public DateTime? RefreshTokenExpiryTime { get; set; }
+
+    /// <summary>
+    /// Gets or sets the protected TOTP shared secret for authenticator-app verification.
+    /// </summary>
+    [MaxLength(2048)]
+    public string? TwoFactorSecret { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether authenticator-based two-factor authentication is enabled.
+    /// </summary>
+    public bool IsTwoFactorEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the timestamp when two-factor authentication was enabled.
+    /// </summary>
+    public DateTime? TwoFactorEnabledAtUtc { get; set; }
+
+    /// <summary>
+    /// Gets or sets the per-user encryption salt used to derive data-at-rest keys.
+    /// </summary>
+    [Required]
+    [MaxLength(128)]
+    public string DataEncryptionSalt { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the optional profile photo URL or data URL.

@@ -65,6 +65,12 @@ public sealed class Transaction
     public string? Notes { get; set; }
 
     /// <summary>
+    /// Gets or sets encrypted transaction payload at rest.
+    /// </summary>
+    [MaxLength(10000)]
+    public string? EncryptedPayload { get; set; }
+
+    /// <summary>
     /// Gets or sets the UTC creation timestamp.
     /// </summary>
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

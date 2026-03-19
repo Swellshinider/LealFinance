@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LealFinance.Api.Tests/LealFinance.Api.Tests.csproj" />
+  <Project Path="LealFinance.Api/LealFinance.Api.csproj" />
+</Solution>

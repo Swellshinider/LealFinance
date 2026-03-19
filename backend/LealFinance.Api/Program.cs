@@ -6,8 +6,10 @@ using LealFinance.Api.Security;
 using LealFinance.Api.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,8 +41,43 @@ builder.Services.AddDbContext<LealFinanceDbContext>(options =>
 
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
+builder.Services.AddScoped<IDataEncryptionService, DataEncryptionService>();
 builder.Services.AddScoped<IRecurringTransactionService, RecurringTransactionService>();
 builder.Services.AddHostedService<RecurringTransactionSchedulerService>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("AuthFixed", context =>
+    {
+        var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"auth:{clientIp}",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 25,
+                QueueLimit = 0,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            });
+    });
+
+    options.AddPolicy("ApiFixed", context =>
+    {
+        var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"api:{clientIp}",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                QueueLimit = 0,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            });
+    });
+});
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -69,9 +106,11 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.EnsureCreated();
     EnsureAuthRefreshTokenColumns(databasePath);
     EnsureUserProfileColumns(databasePath);
+    EnsureUserSecurityColumns(databasePath);
     EnsureTransactionsTable(databasePath);
     EnsureRecurringTransactionsTable(databasePath);
     EnsureRecurringColumnsOnTransactions(databasePath);
+    EnsureEncryptedPayloadColumns(databasePath);
 }
 
 if (app.Environment.IsDevelopment())
@@ -81,6 +120,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("LocalAngular");
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -161,6 +201,67 @@ static void EnsureUserProfileColumns(string sqliteDatabasePath)
         WHERE FullName IS NULL OR trim(FullName) = '';
         """;
     fillMissingNamesCommand.ExecuteNonQuery();
+}
+
+static void EnsureUserSecurityColumns(string sqliteDatabasePath)
+{
+    using var connection = new SqliteConnection($"Data Source={sqliteDatabasePath}");
+    connection.Open();
+
+    using var tableInfoCommand = connection.CreateCommand();
+    tableInfoCommand.CommandText = "PRAGMA table_info(Users);";
+
+    var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    using (var reader = tableInfoCommand.ExecuteReader())
+    {
+        while (reader.Read())
+        {
+            existingColumns.Add(reader.GetString(1));
+        }
+    }
+
+    if (!existingColumns.Contains("MasterPasswordHash"))
+    {
+        using var alterMasterPasswordHash = connection.CreateCommand();
+        alterMasterPasswordHash.CommandText = "ALTER TABLE Users ADD COLUMN MasterPasswordHash TEXT NULL;";
+        alterMasterPasswordHash.ExecuteNonQuery();
+
+        using var backfillMasterPasswordHash = connection.CreateCommand();
+        backfillMasterPasswordHash.CommandText = "UPDATE Users SET MasterPasswordHash = PasswordHash WHERE MasterPasswordHash IS NULL OR trim(MasterPasswordHash) = '';";
+        backfillMasterPasswordHash.ExecuteNonQuery();
+    }
+
+    if (!existingColumns.Contains("TwoFactorSecret"))
+    {
+        using var alterTwoFactorSecret = connection.CreateCommand();
+        alterTwoFactorSecret.CommandText = "ALTER TABLE Users ADD COLUMN TwoFactorSecret TEXT NULL;";
+        alterTwoFactorSecret.ExecuteNonQuery();
+    }
+
+    if (!existingColumns.Contains("IsTwoFactorEnabled"))
+    {
+        using var alterIsTwoFactorEnabled = connection.CreateCommand();
+        alterIsTwoFactorEnabled.CommandText = "ALTER TABLE Users ADD COLUMN IsTwoFactorEnabled INTEGER NOT NULL DEFAULT 0;";
+        alterIsTwoFactorEnabled.ExecuteNonQuery();
+    }
+
+    if (!existingColumns.Contains("TwoFactorEnabledAtUtc"))
+    {
+        using var alterTwoFactorEnabledAtUtc = connection.CreateCommand();
+        alterTwoFactorEnabledAtUtc.CommandText = "ALTER TABLE Users ADD COLUMN TwoFactorEnabledAtUtc TEXT NULL;";
+        alterTwoFactorEnabledAtUtc.ExecuteNonQuery();
+    }
+
+    if (!existingColumns.Contains("DataEncryptionSalt"))
+    {
+        using var alterDataEncryptionSalt = connection.CreateCommand();
+        alterDataEncryptionSalt.CommandText = "ALTER TABLE Users ADD COLUMN DataEncryptionSalt TEXT NULL;";
+        alterDataEncryptionSalt.ExecuteNonQuery();
+
+        using var fillMissingSalt = connection.CreateCommand();
+        fillMissingSalt.CommandText = "UPDATE Users SET DataEncryptionSalt = lower(hex(randomblob(16))) WHERE DataEncryptionSalt IS NULL OR trim(DataEncryptionSalt) = '';";
+        fillMissingSalt.ExecuteNonQuery();
+    }
 }
 
 static void EnsureTransactionsTable(string sqliteDatabasePath)
@@ -268,4 +369,48 @@ static void EnsureRecurringColumnsOnTransactions(string sqliteDatabasePath)
         """;
 
     recurringIndexCommand.ExecuteNonQuery();
+}
+
+static void EnsureEncryptedPayloadColumns(string sqliteDatabasePath)
+{
+    using var connection = new SqliteConnection($"Data Source={sqliteDatabasePath}");
+    connection.Open();
+
+    using var transactionTableInfoCommand = connection.CreateCommand();
+    transactionTableInfoCommand.CommandText = "PRAGMA table_info(Transactions);";
+
+    var transactionColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    using (var reader = transactionTableInfoCommand.ExecuteReader())
+    {
+        while (reader.Read())
+        {
+            transactionColumns.Add(reader.GetString(1));
+        }
+    }
+
+    if (!transactionColumns.Contains("EncryptedPayload"))
+    {
+        using var alterTransactionEncryptedPayload = connection.CreateCommand();
+        alterTransactionEncryptedPayload.CommandText = "ALTER TABLE Transactions ADD COLUMN EncryptedPayload TEXT NULL;";
+        alterTransactionEncryptedPayload.ExecuteNonQuery();
+    }
+
+    using var recurringTableInfoCommand = connection.CreateCommand();
+    recurringTableInfoCommand.CommandText = "PRAGMA table_info(RecurringTransactions);";
+
+    var recurringColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    using (var reader = recurringTableInfoCommand.ExecuteReader())
+    {
+        while (reader.Read())
+        {
+            recurringColumns.Add(reader.GetString(1));
+        }
+    }
+
+    if (!recurringColumns.Contains("EncryptedPayload"))
+    {
+        using var alterRecurringEncryptedPayload = connection.CreateCommand();
+        alterRecurringEncryptedPayload.CommandText = "ALTER TABLE RecurringTransactions ADD COLUMN EncryptedPayload TEXT NULL;";
+        alterRecurringEncryptedPayload.ExecuteNonQuery();
+    }
 }

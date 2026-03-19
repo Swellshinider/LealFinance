@@ -224,6 +224,12 @@ export class ReportsTabComponent implements OnInit {
               return;
             }
 
+            if (error instanceof HttpErrorResponse && error.status === 403) {
+              this.message = 'Enable authenticator-based 2FA in your profile to access reports.';
+              void this.router.navigate(['/profile']);
+              return;
+            }
+
             this.message = 'Unable to load reports.';
           });
         }

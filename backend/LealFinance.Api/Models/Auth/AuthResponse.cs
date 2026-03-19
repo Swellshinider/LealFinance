@@ -26,6 +26,11 @@ public sealed class AuthResponse
     public string FullName { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets whether the user still needs to complete authenticator setup.
+    /// </summary>
+    public bool RequiresTwoFactorSetup { get; set; }
+
+    /// <summary>
     /// Gets or sets the optional profile photo URL or data URL.
     /// </summary>
     public string? ProfilePhotoUrl { get; set; }

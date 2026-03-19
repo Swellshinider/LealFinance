@@ -33,9 +33,14 @@ public sealed class LealFinanceDbContext(DbContextOptions<LealFinanceDbContext> 
             entity.Property(user => user.Email).IsRequired().HasMaxLength(256);
             entity.Property(user => user.FullName).IsRequired().HasMaxLength(120);
             entity.Property(user => user.PasswordHash).IsRequired();
+            entity.Property(user => user.MasterPasswordHash).IsRequired();
             entity.Property(user => user.CreatedAtUtc).IsRequired();
             entity.Property(user => user.RefreshToken).HasMaxLength(512);
             entity.Property(user => user.RefreshTokenExpiryTime);
+            entity.Property(user => user.TwoFactorSecret).HasMaxLength(2048);
+            entity.Property(user => user.IsTwoFactorEnabled).IsRequired();
+            entity.Property(user => user.TwoFactorEnabledAtUtc);
+            entity.Property(user => user.DataEncryptionSalt).IsRequired().HasMaxLength(128);
             entity.Property(user => user.ProfilePhotoUrl).HasMaxLength(10000000);
         });
 
@@ -50,6 +55,7 @@ public sealed class LealFinanceDbContext(DbContextOptions<LealFinanceDbContext> 
             entity.Property(transaction => transaction.Category).IsRequired().HasMaxLength(100);
             entity.Property(transaction => transaction.Date).IsRequired();
             entity.Property(transaction => transaction.Notes).HasMaxLength(500);
+            entity.Property(transaction => transaction.EncryptedPayload).HasMaxLength(10000);
             entity.Property(transaction => transaction.CreatedAtUtc).IsRequired();
             entity.HasOne<User>()
                 .WithMany()
@@ -70,6 +76,7 @@ public sealed class LealFinanceDbContext(DbContextOptions<LealFinanceDbContext> 
             entity.Property(recurring => recurring.Amount).HasPrecision(18, 2);
             entity.Property(recurring => recurring.Category).IsRequired().HasMaxLength(100);
             entity.Property(recurring => recurring.Notes).HasMaxLength(500);
+            entity.Property(recurring => recurring.EncryptedPayload).HasMaxLength(10000);
             entity.Property(recurring => recurring.StartDateUtc).IsRequired();
             entity.Property(recurring => recurring.FrequencyUnit).IsRequired().HasMaxLength(16);
             entity.Property(recurring => recurring.FrequencyInterval).IsRequired();

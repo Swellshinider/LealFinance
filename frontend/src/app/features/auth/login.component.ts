@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { finalize, TimeoutError } from 'rxjs';
 
-import { LoginRequest } from '../../core/models/auth';
+import { AuthResponse, LoginRequest } from '../../core/models/auth';
 import { AuthService } from '../../core/services/auth.service';
 
 /**
@@ -93,8 +93,13 @@ export class LoginComponent {
         })
       )
       .subscribe({
-        next: () => {
+        next: (response: AuthResponse) => {
           this.runInAngular(() => {
+            if (response.requiresTwoFactorSetup) {
+              void this.router.navigate(['/profile']);
+              return;
+            }
+
             void this.router.navigate(['/dashboard']);
           });
         },
@@ -112,6 +117,11 @@ export class LoginComponent {
 
             if (error.status === 401) {
               this.errorMessage = 'No account found with these credentials. Please register or try again.';
+              return;
+            }
+
+            if (error.status === 403) {
+              this.errorMessage = 'Complete authenticator setup in your profile before accessing dashboard data.';
               return;
             }
 

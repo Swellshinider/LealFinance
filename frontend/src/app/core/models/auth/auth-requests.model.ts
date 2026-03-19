@@ -43,3 +43,21 @@ export interface UpdateProfileRequest {
   /** Optional profile photo URL or data URL. */
   profilePhotoUrl: string | null;
 }
+
+/**
+ * 2FA enable request payload.
+ */
+export interface EnableTwoFactorRequest {
+  /** 6-digit code from authenticator app. */
+  verificationCode: string;
+}
+
+/**
+ * Password recovery request payload.
+ */
+export interface RecoverPasswordRequest {
+  /** New login password. */
+  newPassword: string;
+  /** 6-digit code from authenticator app. */
+  verificationCode: string;
+}

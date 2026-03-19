@@ -3,7 +3,6 @@ using LealFinance.Api.Data;
 using LealFinance.Api.Entities;
 using LealFinance.Api.Models.Auth;
 using LealFinance.Api.Security;
-using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -26,10 +25,10 @@ public static class AuthEndpoints
     /// <returns>The same route builder.</returns>
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        var authRoutes = app.MapGroup("/api/auth");
+        var authRoutes = app.MapGroup("/api/auth").RequireRateLimiting("AuthFixed");
         var authProtectedRoutes = authRoutes.MapGroup(string.Empty).RequireAuthorization();
 
-        authRoutes.MapPost("/register", async (RegisterRequest request, LealFinanceDbContext dbContext, IPasswordHasher passwordHasher, CancellationToken cancellationToken) =>
+        authRoutes.MapPost("/register", async (RegisterRequest request, LealFinanceDbContext dbContext, IPasswordHasher passwordHasher, IDataEncryptionService dataEncryptionService, ITwoFactorService twoFactorService, CancellationToken cancellationToken) =>
         {
             if (!request.TryValidate(out var errors))
             {
@@ -43,11 +42,19 @@ public static class AuthEndpoints
                 return Results.Conflict(new { message = "A user with this e-mail already exists." });
             }
 
+            var passwordHash = passwordHasher.HashPassword(request.Password);
+            var dataEncryptionSalt = dataEncryptionService.GenerateUserSalt();
+            var twoFactorSecret = twoFactorService.GenerateSharedSecret();
+
             var user = new User
             {
                 Email = normalizedEmail,
                 FullName = request.FullName.Trim(),
-                PasswordHash = passwordHasher.HashPassword(request.Password),
+                PasswordHash = passwordHash,
+                MasterPasswordHash = passwordHash,
+                DataEncryptionSalt = dataEncryptionSalt,
+                TwoFactorSecret = dataEncryptionService.Encrypt(twoFactorSecret, passwordHash, dataEncryptionSalt),
+                IsTwoFactorEnabled = false,
                 CreatedAtUtc = DateTime.UtcNow
             };
 
@@ -72,6 +79,7 @@ public static class AuthEndpoints
             }
 
             var response = jwtTokenService.CreateToken(user);
+            response.RequiresTwoFactorSetup = !user.IsTwoFactorEnabled;
 
             if (request.RememberMe)
             {
@@ -139,6 +147,7 @@ public static class AuthEndpoints
                 }
 
                 var newAuthResponse = jwtTokenService.CreateToken(user);
+                newAuthResponse.RequiresTwoFactorSetup = !user.IsTwoFactorEnabled;
                 var newRefreshToken = GenerateSecureRefreshToken();
                 var newRefreshTokenExpiry = DateTime.UtcNow.Add(RefreshTokenLifetime);
 
@@ -177,7 +186,8 @@ public static class AuthEndpoints
             {
                 FullName = user.FullName,
                 Email = user.Email,
-                ProfilePhotoUrl = user.ProfilePhotoUrl
+                ProfilePhotoUrl = user.ProfilePhotoUrl,
+                IsTwoFactorEnabled = user.IsTwoFactorEnabled
             });
         });
 
@@ -221,11 +231,145 @@ public static class AuthEndpoints
             {
                 FullName = user.FullName,
                 Email = user.Email,
-                ProfilePhotoUrl = user.ProfilePhotoUrl
+                ProfilePhotoUrl = user.ProfilePhotoUrl,
+                IsTwoFactorEnabled = user.IsTwoFactorEnabled
             });
         });
 
+        authProtectedRoutes.MapGet("/2fa/setup", async (HttpContext httpContext, LealFinanceDbContext dbContext, IDataEncryptionService dataEncryptionService, ITwoFactorService twoFactorService, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await dbContext.Users.SingleOrDefaultAsync(entity => entity.Id == userId, cancellationToken);
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User profile not found." });
+            }
+
+            var sharedSecret = ResolveOrCreateTwoFactorSecret(user, dataEncryptionService, twoFactorService);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(new TwoFactorSetupResponse
+            {
+                IsTwoFactorEnabled = user.IsTwoFactorEnabled,
+                ManualEntryKey = sharedSecret,
+                OtpAuthUri = twoFactorService.BuildOtpAuthUri("LealFinance", user.Email, sharedSecret)
+            });
+        });
+
+        authProtectedRoutes.MapPost("/2fa/enable", async (EnableTwoFactorRequest request, HttpContext httpContext, LealFinanceDbContext dbContext, IDataEncryptionService dataEncryptionService, ITwoFactorService twoFactorService, CancellationToken cancellationToken) =>
+        {
+            if (!request.TryValidate(out var errors))
+            {
+                return Results.ValidationProblem(errors);
+            }
+
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await dbContext.Users.SingleOrDefaultAsync(entity => entity.Id == userId, cancellationToken);
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User profile not found." });
+            }
+
+            var sharedSecret = ResolveOrCreateTwoFactorSecret(user, dataEncryptionService, twoFactorService);
+            if (!twoFactorService.VerifyCode(sharedSecret, request.VerificationCode))
+            {
+                return Results.BadRequest(new { message = "The verification code is invalid or expired." });
+            }
+
+            user.IsTwoFactorEnabled = true;
+            user.TwoFactorEnabledAtUtc = DateTime.UtcNow;
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(new { message = "Authenticator app linked successfully." });
+        });
+
+        authProtectedRoutes.MapPost("/profile/recover-password", async (RecoverPasswordRequest request, HttpContext httpContext, LealFinanceDbContext dbContext, IPasswordHasher passwordHasher, IDataEncryptionService dataEncryptionService, ITwoFactorService twoFactorService, CancellationToken cancellationToken) =>
+        {
+            if (!request.TryValidate(out var errors))
+            {
+                return Results.ValidationProblem(errors);
+            }
+
+            if (!TryGetUserId(httpContext.User, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await dbContext.Users.SingleOrDefaultAsync(entity => entity.Id == userId, cancellationToken);
+            if (user is null)
+            {
+                return Results.NotFound(new { message = "User profile not found." });
+            }
+
+            if (!user.IsTwoFactorEnabled)
+            {
+                return Results.BadRequest(new { message = "Enable authenticator-based 2FA before recovering your password." });
+            }
+
+            if (passwordHasher.VerifyPassword(request.NewPassword, user.PasswordHash))
+            {
+                return Results.BadRequest(new { message = "New password must be different from your current password." });
+            }
+
+            var sharedSecret = ResolveOrCreateTwoFactorSecret(user, dataEncryptionService, twoFactorService);
+            if (!twoFactorService.VerifyCode(sharedSecret, request.VerificationCode))
+            {
+                return Results.BadRequest(new { message = "The verification code is invalid or expired." });
+            }
+
+            user.PasswordHash = passwordHasher.HashPassword(request.NewPassword);
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(new { message = "Password recovered successfully. Please use the new password in your next login." });
+        });
+
         return app;
+    }
+
+    private static string ResolveOrCreateTwoFactorSecret(User user, IDataEncryptionService dataEncryptionService, ITwoFactorService twoFactorService)
+    {
+        var userSalt = GetOrCreateDataEncryptionSalt(user, dataEncryptionService);
+
+        if (string.IsNullOrWhiteSpace(user.TwoFactorSecret))
+        {
+            var generated = twoFactorService.GenerateSharedSecret();
+            user.TwoFactorSecret = dataEncryptionService.Encrypt(generated, user.MasterPasswordHash, userSalt);
+            return generated;
+        }
+
+        return dataEncryptionService.Decrypt(user.TwoFactorSecret, user.MasterPasswordHash, userSalt);
+    }
+
+    private static string GetOrCreateDataEncryptionSalt(User user, IDataEncryptionService dataEncryptionService)
+    {
+        if (!string.IsNullOrWhiteSpace(user.DataEncryptionSalt))
+        {
+            try
+            {
+                _ = Convert.FromBase64String(user.DataEncryptionSalt);
+                return user.DataEncryptionSalt;
+            }
+            catch
+            {
+                user.DataEncryptionSalt = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(user.DataEncryptionSalt));
+                return user.DataEncryptionSalt;
+            }
+        }
+
+        user.DataEncryptionSalt = dataEncryptionService.GenerateUserSalt();
+        return user.DataEncryptionSalt;
     }
 
     private static bool TryGetUserId(ClaimsPrincipal user, out int userId)

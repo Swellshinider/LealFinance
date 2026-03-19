@@ -1,0 +1,64 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "backend/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend-build:
+    name: Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore LealFinance.slnx
+
+      - name: Build
+        run: dotnet build LealFinance.slnx --configuration Release --no-restore
+
+  backend-test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: backend-build
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore LealFinance.slnx
+
+      - name: Test
+        run: dotnet test LealFinance.slnx --configuration Release --no-restore --verbosity normal

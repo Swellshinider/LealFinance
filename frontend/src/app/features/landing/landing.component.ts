@@ -1,7 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -12,7 +10,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatCardModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss'
 })

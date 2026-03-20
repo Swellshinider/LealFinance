@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
-import { BaseChartDirective } from 'ng2-charts';
+import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { finalize } from 'rxjs';
 
 import {
@@ -43,6 +43,7 @@ type ReportDateFilterMode = 'all' | 'upTo' | 'range' | 'fixed';
     MatProgressSpinnerModule,
     BaseChartDirective
   ],
+  providers: [provideCharts(withDefaultRegisterables())],
   templateUrl: './reports-tab.component.html',
   styleUrl: './reports-tab.component.scss'
 })

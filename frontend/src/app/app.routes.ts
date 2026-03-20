@@ -1,12 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { MainLayoutComponent } from './core/layout/main-layout/main-layout.component';
-import { LoginComponent } from './features/auth/login.component';
-import { RegisterComponent } from './features/auth/register.component';
-import { DashboardComponent } from './features/dashboard/dashboard.component';
-import { LandingComponent } from './features/landing/landing.component';
-import { TransactionsHistoryPageComponent } from './features/dashboard/transactions-history-page/transactions-history-page.component';
-import { ProfileComponent } from './features/profile/profile.component';
 
 export const routes: Routes = [
 	{
@@ -15,29 +9,32 @@ export const routes: Routes = [
 		children: [
 			{
 				path: '',
-				component: LandingComponent
+				loadComponent: () => import('./features/landing/landing.component').then((m) => m.LandingComponent)
 			},
 			{
 				path: 'login',
-				component: LoginComponent
+				loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent)
 			},
 			{
 				path: 'register',
-				component: RegisterComponent
+				loadComponent: () => import('./features/auth/register.component').then((m) => m.RegisterComponent)
 			},
 			{
 				path: 'dashboard',
-				component: DashboardComponent,
+				loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
 				canActivate: [authGuard]
 			},
 			{
 				path: 'dashboard/transactions-history',
-				component: TransactionsHistoryPageComponent,
+				loadComponent: () =>
+					import('./features/dashboard/transactions-history-page/transactions-history-page.component').then(
+						(m) => m.TransactionsHistoryPageComponent
+					),
 				canActivate: [authGuard]
 			},
 			{
 				path: 'profile',
-				component: ProfileComponent,
+				loadComponent: () => import('./features/profile/profile.component').then((m) => m.ProfileComponent),
 				canActivate: [authGuard]
 			},
 			{

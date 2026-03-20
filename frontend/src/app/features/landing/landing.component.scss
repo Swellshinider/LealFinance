@@ -52,6 +52,32 @@ h1 {
   gap: 0.65rem;
 }
 
+.cta {
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.72rem 1.05rem;
+  border: 1px solid transparent;
+  transition: transform 180ms ease, filter 180ms ease, background-color 180ms ease;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+.cta-primary {
+  color: #ffffff;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--lf-primary) 84%, #02103f), color-mix(in srgb, var(--lf-accent) 70%, #06242d));
+}
+
+.cta-secondary {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .hero-metrics {
   display: grid;
   gap: 0.55rem;
@@ -156,14 +182,16 @@ h1 {
   border-radius: 999px;
 }
 
-mat-card-title {
+.feature-title {
+  margin: 0 0 0.6rem;
   margin-bottom: 0.6rem;
   color: var(--lf-text-primary);
   font-size: 1.06rem;
   line-height: 1.25;
 }
 
-mat-card-content {
+.feature-content {
+  margin: 0;
   color: var(--lf-text-muted);
   line-height: 1.5;
 }

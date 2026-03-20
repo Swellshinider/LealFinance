@@ -9,10 +9,10 @@
 
       <div class="hero-actions">
         @if (isAuthenticated()) {
-          <a mat-flat-button color="primary" routerLink="/dashboard">Open dashboard</a>
+          <a class="cta cta-primary" routerLink="/dashboard">Open dashboard</a>
         } @else {
-          <a mat-flat-button color="primary" routerLink="/register">Create account</a>
-          <a mat-stroked-button routerLink="/login">Sign in</a>
+          <a class="cta cta-primary" routerLink="/register">Create account</a>
+          <a class="cta cta-secondary" routerLink="/login">Sign in</a>
         }
       </div>
     </div>
@@ -34,7 +34,7 @@
   </div>
 
   <div class="feature-grid">
-    <mat-card appearance="outlined" class="feature-card">
+    <article class="feature-card">
       <div class="feature-top">
         <div class="feature-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" class="feature-svg" xmlns="http://www.w3.org/2000/svg">
@@ -43,13 +43,13 @@
         </div>
         <span class="feature-tag">Security</span>
       </div>
-      <mat-card-title>Secure Authentication</mat-card-title>
-      <mat-card-content>
+      <h3 class="feature-title">Secure Authentication</h3>
+      <p class="feature-content">
         Account sessions are protected with token-based authentication and strong password hashing practices.
-      </mat-card-content>
-    </mat-card>
+      </p>
+    </article>
 
-    <mat-card appearance="outlined" class="feature-card">
+    <article class="feature-card">
       <div class="feature-top">
         <div class="feature-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" class="feature-svg" xmlns="http://www.w3.org/2000/svg">
@@ -58,13 +58,13 @@
         </div>
         <span class="feature-tag">Intelligence</span>
       </div>
-      <mat-card-title>Clear Financial Insights</mat-card-title>
-      <mat-card-content>
+      <h3 class="feature-title">Clear Financial Insights</h3>
+      <p class="feature-content">
         Access your dashboard quickly and keep key information visible so you can make better day-to-day decisions.
-      </mat-card-content>
-    </mat-card>
+      </p>
+    </article>
 
-    <mat-card appearance="outlined" class="feature-card">
+    <article class="feature-card">
       <div class="feature-top">
         <div class="feature-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" class="feature-svg" xmlns="http://www.w3.org/2000/svg">
@@ -73,10 +73,10 @@
         </div>
         <span class="feature-tag">Scalability</span>
       </div>
-      <mat-card-title>Built for Growth</mat-card-title>
-      <mat-card-content>
+      <h3 class="feature-title">Built for Growth</h3>
+      <p class="feature-content">
         LealFinance is designed to evolve with your needs while keeping the experience fast and easy to navigate.
-      </mat-card-content>
-    </mat-card>
+      </p>
+    </article>
   </div>
 </section>

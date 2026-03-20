@@ -1,9 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, NgZone, OnInit, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { UserProfile } from '../../models/auth';
@@ -16,7 +12,7 @@ import { ThemeService } from '../../services/theme.service';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatMenuModule, MatTooltipModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })

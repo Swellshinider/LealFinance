@@ -36,10 +36,36 @@ $lealfinance-theme-dark: mat.m2-define-dark-theme((
 	density: 0
 ));
 
-@include mat.all-component-themes($lealfinance-theme);
+@include mat.button-theme($lealfinance-theme);
+@include mat.card-theme($lealfinance-theme);
+@include mat.checkbox-theme($lealfinance-theme);
+@include mat.form-field-theme($lealfinance-theme);
+@include mat.input-theme($lealfinance-theme);
+@include mat.menu-theme($lealfinance-theme);
+@include mat.paginator-theme($lealfinance-theme);
+@include mat.progress-spinner-theme($lealfinance-theme);
+@include mat.select-theme($lealfinance-theme);
+@include mat.autocomplete-theme($lealfinance-theme);
+@include mat.table-theme($lealfinance-theme);
+@include mat.tabs-theme($lealfinance-theme);
+@include mat.toolbar-theme($lealfinance-theme);
+@include mat.tooltip-theme($lealfinance-theme);
 
 body.theme-dark {
-  @include mat.all-component-colors($lealfinance-theme-dark);
+	@include mat.button-color($lealfinance-theme-dark);
+	@include mat.card-color($lealfinance-theme-dark);
+	@include mat.checkbox-color($lealfinance-theme-dark);
+	@include mat.form-field-color($lealfinance-theme-dark);
+	@include mat.input-color($lealfinance-theme-dark);
+	@include mat.menu-color($lealfinance-theme-dark);
+	@include mat.paginator-color($lealfinance-theme-dark);
+	@include mat.progress-spinner-color($lealfinance-theme-dark);
+	@include mat.select-color($lealfinance-theme-dark);
+	@include mat.autocomplete-color($lealfinance-theme-dark);
+	@include mat.table-color($lealfinance-theme-dark);
+	@include mat.tabs-color($lealfinance-theme-dark);
+	@include mat.toolbar-color($lealfinance-theme-dark);
+	@include mat.tooltip-color($lealfinance-theme-dark);
 }
 
 :root {

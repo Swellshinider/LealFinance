@@ -1,4 +1,4 @@
-<mat-toolbar class="header-toolbar">
+<header class="header-toolbar">
   <div class="header-inner">
     <a class="brand" routerLink="/" aria-label="LealFinance home">
       <span class="brand-mark" aria-hidden="true">LF</span>
@@ -9,24 +9,22 @@
     </a>
 
     <nav class="main-nav" aria-label="Primary navigation">
-      <a mat-button routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active-link">Home</a>
+      <a class="nav-link" routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active-link">Home</a>
 
       @if (!isAuthenticated()) {
-        <a mat-button routerLink="/login" routerLinkActive="active-link">Login</a>
-        <a mat-button routerLink="/register" routerLinkActive="active-link">Register</a>
+        <a class="nav-link" routerLink="/login" routerLinkActive="active-link">Login</a>
+        <a class="nav-link" routerLink="/register" routerLinkActive="active-link">Register</a>
       } @else {
-        <a mat-button routerLink="/dashboard" routerLinkActive="active-link">Dashboard</a>
+        <a class="nav-link" routerLink="/dashboard" routerLinkActive="active-link">Dashboard</a>
       }
     </nav>
 
     <div class="header-actions">
       <button
-        mat-icon-button
         type="button"
         class="theme-toggle"
         (click)="toggleTheme()"
-        [matTooltip]="themeMode() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
-        matTooltipPosition="below"
+        [title]="themeMode() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
         [attr.aria-label]="themeMode() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
         @if (themeMode() === 'dark') {
           <svg viewBox="0 0 16 16" class="theme-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -41,19 +39,18 @@
 
       @if (isAuthenticated()) {
         <button
-          mat-icon-button
-          [matMenuTriggerFor]="profileMenu"
           type="button"
           class="profile-trigger"
-          aria-label="Open profile menu">
+          (click)="goToProfile()"
+          title="Open profile"
+          aria-label="Open profile">
           <img [src]="getProfileAvatarUrl()" alt="User profile avatar" class="profile-avatar" />
         </button>
 
-        <mat-menu #profileMenu="matMenu">
-          <button mat-menu-item type="button" (click)="goToProfile()">Profile</button>
-          <button mat-menu-item type="button" (click)="logout()">Logout</button>
-        </mat-menu>
+        <button type="button" class="action-link" (click)="logout()" aria-label="Logout">
+          Logout
+        </button>
       }
     </div>
   </div>
-</mat-toolbar>
+</header>
